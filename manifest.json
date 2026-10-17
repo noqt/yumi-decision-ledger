@@ -1,7 +1,7 @@
 {
   "name": "yumi-decision-ledger",
-  "version": "1.5.0",
-  "release_kind": "additive-self-describing-origin-receipt-v2",
+  "version": "1.6.0",
+  "release_kind": "native-skill-routing-alignment",
   "base_component_version": "1.1.0",
   "runtime": "component-specific; legacy ledger tools use Python 3.11+ standard library; origin receipt uses Python 3.12+ standard library",
   "license": "MIT",
@@ -45,7 +45,7 @@
   ],
   "files": {
     "README.md": {"role": "documentation", "sha256": "935566d4c0afb2fa3ee9513014ad15a70648a3027b0e8d310eda4035717a25fe"},
-    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "aba5f4719c9932b52a4c7fde3dac4da7ff3b25b9c1414d2f9f12ef9dd07972d3"},
+    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "a4706941cd439901eaed17b5db9a9d39cab5c6b95c6975e62510496f09cb03cc"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
     "schema.json": {"sha256": "dcad435054e16dcd3b50685e3c305312546620e545ba8d65fcac7655175b6176"},
@@ -79,7 +79,7 @@
     "integrity_limit": "The installer converted all 12 published LF text files to CRLF. Their LF-normalized content matched, but installed byte hashes differed; manifest SHA-256 values identify the original published LF bytes.",
     "claim_limit": "One compatibility observation for only the named legacy resolver and handoff freshness checker; it does not certify origin_receipt.py, other hosts, independent discovery, or adoption."
   },
-  "packaging_boundary": "Version 1.4.0 adds a separate opt-in origin-bound command-receipt capability. Existing ledger components and native skill routing are unchanged. The handoff freshness checker remains v1.2, the snapshot applicability checker remains v1.0, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Both ledger checkers package and reuse the base components; neither is independent validation. Earlier packaging versions documented native-skill task-fit framing, one observed legacy Codex compatibility check, and native-skill packaging. Immutable base source metadata may retain the earlier noqt/noqt origin documentation URL.",
+  "packaging_boundary": "Version 1.6.0 aligns native-skill routing with the already-delivered optional experimental origin-receipt capability; it changes no command or source behavior or component versions. Version 1.5.0 adds self-reported informational producer metadata to the origin receipt: the writer uses v2 and the reader accepts v1/v2, while v1-only readers reject v2. Version 1.4.0 adds a separate opt-in origin-bound command-receipt capability. Existing ledger components were unchanged in that release. The handoff freshness checker remains v1.2, the snapshot applicability checker remains v1.0, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Both ledger checkers package and reuse the base components; neither is independent validation. Earlier packaging versions documented native-skill task-fit framing, one observed legacy Codex compatibility check, and native-skill packaging. Immutable base source metadata may retain the earlier noqt/noqt origin documentation URL.",
   "limits": {
     "ledger_input_bytes": 65536,
     "threadmark_output_bytes": 16384,

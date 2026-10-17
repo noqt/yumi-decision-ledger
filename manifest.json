@@ -1,16 +1,25 @@
 {
   "name": "yumi-decision-ledger",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "base_component_version": "1.1.0",
   "runtime": "python3.11+-standard-library-only",
   "license": "MIT",
   "entrypoints": {
     "resolver": "yumi_continuity.py",
-    "handoff_card": "threadmark_handoff.py"
+    "handoff_card": "threadmark_handoff.py",
+    "freshness_check": "threadmark_verify.py"
+  },
+  "freshness_check_capability": {
+    "capability": "handoff-freshness-check",
+    "version": "1.2",
+    "doc_url": "https://github.com/noqt/yumi-decision-ledger",
+    "base_handoff_doc_url": "https://github.com/noqt/noqt/tree/main/yumi/continuity/v1.1"
   },
   "commands": [
     ["yumi_continuity.py", "resolve", "--input", "PATH_OR_DASH"],
     ["yumi_continuity.py", "threadmark", "--input", "PATH_OR_DASH"],
-    ["threadmark_handoff.py", "export", "--input", "PATH_OR_DASH"]
+    ["threadmark_handoff.py", "export", "--input", "PATH_OR_DASH"],
+    ["threadmark_verify.py", "check", "--card", "PATH", "--ledger", "PATH"]
   ],
   "files": {
     "README.md": {"role": "documentation"},
@@ -18,10 +27,12 @@
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
     "schema.json": {"sha256": "dcad435054e16dcd3b50685e3c305312546620e545ba8d65fcac7655175b6176"},
     "LICENSE": {"sha256": "dc6469f092dcb09157fb9997a2f367c12d44f8196bd07321c4450d88774771b2"},
+    "threadmark_verify.py": {"sha256": "2f758c6b2477b5547182115f3a9c00b747db9b503a18916f1e3a1da457f92823"},
     "manifest.json": {"role": "self-describing inventory; its own digest is intentionally external"},
     "examples/scenarios.json": {"sha256": "0a262993248730b6a0555584f7bfb60330ea9dfb59eff419ac42f46d3628312e"},
     "tests/test_yumi_continuity.py": {"sha256": "e563dd3e97ba7e25c2b435d5cb45f17a3e83bd25608392ee02537eb723e94dd9"},
-    "tests/test_threadmark_handoff.py": {"sha256": "76aedef1cee34830a20b6479fe041bdbfa7825c0ecab44aabd9841680f21745f"}
+    "tests/test_threadmark_handoff.py": {"sha256": "76aedef1cee34830a20b6479fe041bdbfa7825c0ecab44aabd9841680f21745f"},
+    "tests/test_threadmark_verify.py": {"sha256": "58a69269fc4e6ba5481928e3a360bbace16018de7af63c7598d6075a19feeeab"}
   },
   "accepted_public_origins": {
     "repository": "https://github.com/noqt/noqt",
@@ -31,14 +42,16 @@
     "handoff_card_url": "https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1"
   },
   "canonical_discovery_entrypoint": "https://github.com/noqt/yumi-decision-ledger",
-  "packaging_boundary": "This bundle packages the same already-public Yumi continuity v1.1 capability; it is not new independent validation. Immutable code metadata may retain the earlier noqt/noqt origin documentation URL.",
+  "packaging_boundary": "The resolver and handoff-card base components are the unchanged already-public Yumi continuity v1.1 capability. The newly authored freshness checker is a v1.2 extension that packages and reuses those base components; it is not independent validation. Immutable base code metadata may retain the earlier noqt/noqt origin documentation URL.",
   "limits": {
     "ledger_input_bytes": 65536,
     "threadmark_output_bytes": 16384,
     "handoff_output_bytes": 4096,
     "required_keys": 8,
     "current_heads": 16,
-    "revisions": 128
+    "revisions": 128,
+    "card_input_bytes": 4096,
+    "freshness_check_output_bytes": 16384
   },
   "side_effects": {
     "network": false,
@@ -46,7 +59,9 @@
     "writes_input": false,
     "output_file_mode": false,
     "executes_input_values": false,
-    "dereferences_source_ids": false
+    "dereferences_source_ids": false,
+    "freshness_check_recomputes_current_threadmark": true,
+    "freshness_check_authenticates_card_or_ledger": false
   },
-  "claim_boundary": "READY means required-key consistency only within the supplied ledger; it does not establish truth, authenticated provenance, freshness, completeness, permission, safety, task completion, intelligence, adoption, or savings."
+  "claim_boundary": "READY means required-key consistency only within the supplied ledger. UNCHANGED means the supplied ready card snapshot matches a newly resolved supplied ledger; card digest claims remain unauthenticated. No result establishes truth, authenticated provenance, ledger freshness or completeness, permission, safety, task completion, intelligence, adoption, or savings."
 }

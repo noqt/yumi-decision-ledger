@@ -1,67 +1,99 @@
 # Yumi Decision Ledger
 
-Resume an agent task from an explicit revision ledger without silently treating
-superseded, withdrawn, missing, or conflicting assertions as current.
+Use this offline Python tool when an agent handoff refers to a decision that may
+have been superseded, withdrawn, lost behind a missing predecessor, or split
+across conflicting heads. It resolves an explicitly supplied JSON revision
+ledger and reports whether every required key has one usable current value.
 
-This bundle is packaging version 1.3.0. It adds a bounded snapshot
-applicability checker; the functional handoff freshness checker remains v1.2,
-and the resolver and handoff-card base components remain the unchanged,
-already-public Yumi continuity v1.1 capability. Both checkers reuse those base
-components; neither is independent validation of them. The accepted base source
-originated in [`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle
-is pinned at
-[`c9496a7d`](https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1)
-and the handoff-card addition at
-[`ba2c990d`](https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1).
-The intended canonical discovery entrypoint for this standalone package is
-<https://github.com/noqt/yumi-decision-ledger>. Immutable code output may still
-carry its earlier `noqt/noqt` documentation URL as origin metadata.
+The input cost is deliberate: callers provide a scope, the required keys, and
+the relevant revisions or head blocks with assertion, source, supersession, and
+withdrawal identifiers. Yumi does not scrape chat history or infer a ledger
+from prose. A `READY` result means consistency within the supplied records
+only—not truth, authenticated provenance, freshness, completeness, permission,
+safety, or task completion.
 
-This standalone Python 3.11+ command-line tool:
+## First value: catch a withdrawn handoff decision
 
-- resolves current state across revision chains and branches;
-- reports retractions, missing predecessors, unresolved forks, and provenance;
-- emits a deterministic **Threadmark** for required task keys;
-- exports a bounded handoff card from an existing Threadmark; and
-- checks a bounded settings snapshot against freshly resolved required keys.
+This small fictional ledger is the existing `withdrawn-decision` example in
+[`examples/scenarios.json`](examples/scenarios.json). Revision `withdraw-r1`
+asserts that the agent should continue; its successor withdraws that assertion.
+Save the following as `ledger.json`:
 
-It uses only the Python standard library. It has no network access, telemetry,
-model dependency, output-file mode, or private Yumi service dependency.
-
-## Native Agent Skill
-
-The repository root is a native skill named `yumi-decision-ledger`. Use it for
-explicit decision/revision-ledger reconciliation, checking whether an agent
-handoff has become stale, or checking a supplied settings snapshot against a
-ledger; it is not a generic memory, database, or JSON/text diff skill.
-
-An installer that accepts the standard skills repository form can install the
-current repository state with:
-
-```text
-npx skills add noqt/yumi-decision-ledger --skill yumi-decision-ledger
+```json
+{
+  "scope": "withdrawal",
+  "required_keys": ["decision"],
+  "revisions": [
+    {
+      "id": "withdraw-r1",
+      "assertions": [
+        {"id": "withdraw-a", "key": "decision", "value": "continue"}
+      ]
+    },
+    {
+      "id": "withdraw-r2",
+      "parent": "withdraw-r1",
+      "withdrawals": [
+        {"target": "withdraw-a", "reason": "supplied correction"}
+      ]
+    }
+  ]
+}
 ```
 
-That convenience command is not a commit pin. When reproducibility matters,
-inspect an exact commit first, verify `SKILL.md` and the manifest inventory,
-then install from that pinned local checkout using the installer's local-source
-flow. Installation does not grant permission to inspect a ledger or run its
-contents.
+Run the single-file resolver with Python 3.11 or newer:
 
-### Observed Codex compatibility
+```text
+python3 -I -B -S yumi_continuity.py threadmark --input ledger.json
+```
 
-One Windows project-copy check used `skills` 1.7.2 with `--agent codex
---copy`. From that installed project location, the resolver and handoff
-freshness checker worked on fictional data under Python 3.12.5. This is one
-compatibility observation, not automatic activation, certification of other
-hosts, independent discovery, or adoption.
+The actual canonical JSON result includes:
 
-That install converted all 12 published LF text files to CRLF. Their
-LF-normalized content matched the published files, but their installed byte
-hashes did not. SHA-256 values in [`manifest.json`](manifest.json) identify the
-original published LF bytes, not byte-identical Windows copies.
+```json
+{
+  "decision": "REVIEW",
+  "blockers": [
+    {"code": "withdrawn", "heads": ["withdraw-r2"], "key": "decision"}
+  ],
+  "key_states": {
+    "decision": {
+      "status": "withdrawn",
+      "withdrawals": [
+        {
+          "effective": true,
+          "revision_id": "withdraw-r2",
+          "target": "withdraw-a"
+        }
+      ]
+    }
+  },
+  "revision_ids": ["withdraw-r1", "withdraw-r2"],
+  "status": "REVIEW"
+}
+```
 
-## Run
+Exit code 2 signals that review is required: the supplied records say the only
+required decision was withdrawn. The caller must handle `REVIEW`. The result
+preserves the revision and withdrawal-target identifiers needed for review, but
+it does not decide what the next decision should be.
+
+## What it does
+
+The repository provides separate Python 3.11+ command-line components that:
+
+- resolve current state across revision chains and branches;
+- report retractions, missing predecessors, unresolved forks, and provenance;
+- emit a deterministic handoff summary (called a **Threadmark**) for required
+  task keys;
+- export and check a bounded handoff card; and
+- check a bounded settings snapshot against freshly resolved required keys.
+
+The resolver is one inspectable Python file. The handoff exporter, handoff
+freshness checker, and snapshot checker are separate adjacent scripts. All use
+only the Python standard library and have no network access, telemetry, model
+dependency, output-file mode, or private Yumi service dependency.
+
+## Commands
 
 Resolve a ledger:
 
@@ -98,6 +130,51 @@ stdin. Each checker accepts stdin for either input, but not both in the same
 invocation. Run the code only when you are already authorized to inspect and
 execute it and to read the supplied input. The `-I -B -S` flags reduce ambient
 Python behavior; they are not an operating-system sandbox.
+
+## Package, provenance, and optional skill installation
+
+This bundle is packaging version 1.3.0. It adds a bounded snapshot
+applicability checker; the functional handoff freshness checker remains v1.2,
+and the resolver and handoff-card base components remain the unchanged,
+already-public Yumi continuity v1.1 capability. Both checkers reuse those base
+components; neither is independent validation of them. The accepted base source
+originated in [`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle
+is pinned at
+[`c9496a7d`](https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1)
+and the handoff-card addition at
+[`ba2c990d`](https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1).
+The intended canonical discovery entrypoint for this standalone package is
+<https://github.com/noqt/yumi-decision-ledger>. Immutable code output may still
+carry its earlier `noqt/noqt` documentation URL as origin metadata.
+
+The repository root is also packaged as a native skill named
+`yumi-decision-ledger` for explicit ledger reconciliation and handoff or
+snapshot checks. It is not a generic memory, database, or JSON/text diff skill.
+An installer that accepts the standard skills repository form can install the
+current repository state with:
+
+```text
+npx skills add noqt/yumi-decision-ledger --skill yumi-decision-ledger
+```
+
+That optional convenience command is not a commit pin. When reproducibility
+matters, inspect an exact commit first, verify `SKILL.md` and the manifest
+inventory, then install from that pinned local checkout using the installer's
+local-source flow. Installation does not grant permission to inspect a ledger
+or run its contents.
+
+### Observed Codex compatibility
+
+One Windows project-copy check used `skills` 1.7.2 with `--agent codex
+--copy`. From that installed project location, the resolver and handoff
+freshness checker worked on fictional data under Python 3.12.5. This is one
+compatibility observation, not automatic activation, certification of other
+hosts, independent discovery, or adoption.
+
+That install converted all 12 published LF text files to CRLF. Their
+LF-normalized content matched the published files, but their installed byte
+hashes did not. SHA-256 values in [`manifest.json`](manifest.json) identify the
+original published LF bytes, not byte-identical Windows copies.
 
 ## Check a handoff card
 

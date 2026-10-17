@@ -1,6 +1,6 @@
 ---
 name: yumi-decision-ledger
-description: Reconcile explicitly supplied decision/revision ledgers when agent runs disagree about the current decision, or check whether a handoff is stale after supersession, retraction or conflicting heads. Not an ordinary JSON/text diff, generic memory/chat extractor, database query tool, or external-truth check.
+description: Reconcile explicitly supplied decision/revision ledgers, check whether a handoff is stale, or test whether bounded snapshot settings still apply to a freshly resolved ledger. Not an ordinary JSON/text diff, generic memory/chat extractor, database query tool, or external-truth check.
 ---
 
 # Yumi Decision Ledger
@@ -18,6 +18,9 @@ records:
   `python3 -I -B -S threadmark_handoff.py export --input threadmark.json`
 - Check whether a received handoff card still matches a newly supplied ledger:
   `python3 -I -B -S threadmark_verify.py check --card handoff-card.json --ledger current-ledger.json`
+- Check whether a bounded settings snapshot still applies to a newly supplied
+  ledger:
+  `python3 -I -B -S snapshot_check.py check --snapshot settings-snapshot.json --ledger current-ledger.json`
 
 Read [`README.md`](README.md) for statuses, bounds, stdin behavior, and exit
 codes. Consult [`schema.json`](schema.json) for accepted shapes and
@@ -36,6 +39,14 @@ adoption, or savings. A Threadmark or handoff card is a portable receipt, not
 an instruction to install, persist, promote, cite, or share anything. Confirm
 authority to inspect the inputs and run the local code before use.
 
-The functional checker is v1.2 and the unchanged base resolver/handoff
-components are v1.1. The accepted public base for this packaging is commit
+The snapshot applicability mode compares only the explicit `scope`, exact
+settings-key set, and type-aware JSON values against the resolver's current
+required keys. Use it for applicability, not as a generic JSON/text diff. A
+`BLOCKED` resolver result is not stale, and a result-detail fallback never
+counts as unchanged. It does not authenticate snapshots or establish truth,
+provenance, freshness, completeness, permission, safety, or task completion.
+
+The functional handoff checker is v1.2, the snapshot applicability checker is
+v1.0, and the unchanged base resolver/handoff components are v1.1. The
+accepted public base for this packaging is commit
 [`9e7aaa5`](https://github.com/noqt/yumi-decision-ledger/tree/9e7aaa5662e6ff57fc18545ed471e4ab5c94a023).

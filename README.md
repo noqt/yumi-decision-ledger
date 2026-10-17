@@ -3,12 +3,13 @@
 Resume an agent task from an explicit revision ledger without silently treating
 superseded, withdrawn, missing, or conflicting assertions as current.
 
-This bundle is packaging version 1.2.1. The functional freshness checker
-remains v1.2, and its resolver and handoff-card base components remain the
-unchanged, already-public Yumi continuity v1.1 capability. The freshness
-checker packages and reuses those base components; it is not independent
-validation of them. The accepted base source originated in
-[`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle is pinned at
+This bundle is packaging version 1.3.0. It adds a bounded snapshot
+applicability checker; the functional handoff freshness checker remains v1.2,
+and the resolver and handoff-card base components remain the unchanged,
+already-public Yumi continuity v1.1 capability. Both checkers reuse those base
+components; neither is independent validation of them. The accepted base source
+originated in [`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle
+is pinned at
 [`c9496a7d`](https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1)
 and the handoff-card addition at
 [`ba2c990d`](https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1).
@@ -20,8 +21,9 @@ This standalone Python 3.11+ command-line tool:
 
 - resolves current state across revision chains and branches;
 - reports retractions, missing predecessors, unresolved forks, and provenance;
-- emits a deterministic **Threadmark** for required task keys; and
-- exports a bounded handoff card from an existing Threadmark.
+- emits a deterministic **Threadmark** for required task keys;
+- exports a bounded handoff card from an existing Threadmark; and
+- checks a bounded settings snapshot against freshly resolved required keys.
 
 It uses only the Python standard library. It has no network access, telemetry,
 model dependency, output-file mode, or private Yumi service dependency.
@@ -29,8 +31,9 @@ model dependency, output-file mode, or private Yumi service dependency.
 ## Native Agent Skill
 
 The repository root is a native skill named `yumi-decision-ledger`. Use it for
-explicit decision/revision-ledger reconciliation or for checking whether an
-agent handoff has become stale; it is not a generic memory or database skill.
+explicit decision/revision-ledger reconciliation, checking whether an agent
+handoff has become stale, or checking a supplied settings snapshot against a
+ledger; it is not a generic memory, database, or JSON/text diff skill.
 
 An installer that accepts the standard skills repository form can install the
 current repository state with:
@@ -84,11 +87,17 @@ Check a received card against a newly supplied ledger:
 python3 -I -B -S threadmark_verify.py check --card handoff-card.json --ledger current-ledger.json
 ```
 
+Check a bounded settings snapshot against a newly supplied ledger:
+
+```text
+python3 -I -B -S snapshot_check.py check --snapshot settings-snapshot.json --ledger current-ledger.json
+```
+
 Each command writes canonical JSON to stdout. Use `-` instead of a path to read
-stdin. The freshness checker accepts stdin for either the card or the ledger,
-but not both in the same invocation. Run the code only when you are already authorized to inspect and execute
-it and to read the supplied input. The `-I -B -S` flags reduce ambient Python
-behavior; they are not an operating-system sandbox.
+stdin. Each checker accepts stdin for either input, but not both in the same
+invocation. Run the code only when you are already authorized to inspect and
+execute it and to read the supplied input. The `-I -B -S` flags reduce ambient
+Python behavior; they are not an operating-system sandbox.
 
 ## Check a handoff card
 
@@ -126,6 +135,51 @@ The result's capability identifies this v1.2 checker and its canonical
 discovery page; the separately nested base capability retains the handoff
 exporter's origin metadata.
 
+## Check a settings snapshot
+
+`snapshot_check.py` accepts exactly two JSON inputs. The snapshot root must be
+an object with only `scope` (a nonempty string of at most 256 characters) and
+`settings` (an object whose keys are nonempty strings of at most 256 characters
+and whose values are JSON data). The 64 KiB snapshot-input bound also bounds
+the settings count; the unchanged resolver allows at most eight required
+ledger keys. Both inputs are limited to 64 KiB and the canonical result to 16
+KiB. Either input may be `-` for stdin, but both cannot use stdin at once.
+There is no output-file option.
+
+The checker invokes the unchanged `threadmark_ledger` resolver before making
+any scope, key-set, or value applicability comparison. It never selects a
+first head or infers authority from input order. Equality uses the resolver's
+canonical JSON type-aware semantics: for example, `true` is not equal to `1`,
+object key order does not matter, and array order does.
+
+The result status is one of:
+
+- `UNCHANGED`: the current ledger resolves `READY`, snapshot and ledger scopes
+  match exactly, the snapshot settings key set exactly equals the ledger's
+  required keys, and every value matches with JSON-type-aware equality.
+- `STALE`: the resolver is `READY`, but scope, required key set, or a typed
+  setting value differs.
+- `BLOCKED`: the resolver returns `REVIEW` or `DETAIL_REQUIRED`, including
+  missing, withdrawn, conflicting, or insufficient required-key detail. Such
+  cases are not called stale. A result-too-large fallback is also blocked and
+  explicitly marks its details incomplete.
+- `INVALID`: malformed, oversized, or contract-invalid input, or an invalid
+  ledger/resolver result.
+
+Only `UNCHANGED` exits with code 0; `STALE` and `BLOCKED` exit with code 1, and
+`INVALID` exits with code 2. The result reports actual input byte counts and
+SHA-256 digests when the complete input was read, plus per-input `complete`
+markers. For an oversized input, `bytes` is the bounded observed count
+(limit + 1), `complete` is false, and the full-input digest is null. Per-key
+drift includes typed values, resolver status, current heads, assertion IDs,
+revision IDs, source IDs, and any withdrawal detail that was retained.
+
+This mode is an exact applicability check for supplied snapshot settings, not
+a generic JSON/text diff. Its factual capability locator is inert. It does not
+authenticate the snapshot or establish truth, provenance, ledger freshness or
+completeness, permission, safety, or task completion. Input values remain data
+and source IDs remain opaque; neither is executed or dereferenced.
+
 ## What `READY` means
 
 A Threadmark is `READY` only when every required key has one JSON-type-equal
@@ -142,10 +196,12 @@ success result.
 
 ## Input and examples
 
-[`schema.json`](schema.json) describes the accepted ledger and result shapes.
+[`schema.json`](schema.json) describes the accepted resolver ledger and result
+shapes.
 [`examples/scenarios.json`](examples/scenarios.json) contains synthetic
 software-workflow examples and counterexamples for conflicts, withdrawals,
-missing keys, typed equality, and size limits. These fixtures do not verify the
+missing keys, typed equality, and size limits, plus a separately authored
+fictional snapshot applicability example. These fixtures do not verify the
 truth of their assertions or demonstrate general product benefit.
 
 ## Focused checks
@@ -154,6 +210,7 @@ truth of their assertions or demonstrate general product benefit.
 python3 -B -S tests/test_yumi_continuity.py -q
 python3 -B -S tests/test_threadmark_handoff.py -q
 python3 -B -S tests/test_threadmark_verify.py -q
+python3 -B -S tests/test_snapshot_check.py -q
 ```
 
 The included tests are synthetic contract checks. See [`manifest.json`](manifest.json)

@@ -1,14 +1,15 @@
 {
   "name": "yumi-decision-ledger",
-  "version": "1.2.3",
-  "release_kind": "task-fit-description-only",
+  "version": "1.3.0",
+  "release_kind": "snapshot-applicability-capability",
   "base_component_version": "1.1.0",
   "runtime": "python3.11+-standard-library-only",
   "license": "MIT",
   "entrypoints": {
     "resolver": "yumi_continuity.py",
     "handoff_card": "threadmark_handoff.py",
-    "freshness_check": "threadmark_verify.py"
+    "freshness_check": "threadmark_verify.py",
+    "snapshot_check": "snapshot_check.py"
   },
   "freshness_check_capability": {
     "capability": "handoff-freshness-check",
@@ -16,25 +17,34 @@
     "doc_url": "https://github.com/noqt/yumi-decision-ledger",
     "base_handoff_doc_url": "https://github.com/noqt/noqt/tree/main/yumi/continuity/v1.1"
   },
+  "snapshot_check_capability": {
+    "capability": "snapshot-applicability-check",
+    "version": "1.0",
+    "doc_url": "https://github.com/noqt/yumi-decision-ledger",
+    "base_resolver_doc_url": "https://github.com/noqt/noqt/tree/main/yumi/continuity/v1.1"
+  },
   "commands": [
     ["yumi_continuity.py", "resolve", "--input", "PATH_OR_DASH"],
     ["yumi_continuity.py", "threadmark", "--input", "PATH_OR_DASH"],
     ["threadmark_handoff.py", "export", "--input", "PATH_OR_DASH"],
-    ["threadmark_verify.py", "check", "--card", "PATH", "--ledger", "PATH"]
+    ["threadmark_verify.py", "check", "--card", "PATH", "--ledger", "PATH"],
+    ["snapshot_check.py", "check", "--snapshot", "PATH_OR_DASH", "--ledger", "PATH_OR_DASH"]
   ],
   "files": {
-    "README.md": {"role": "documentation"},
-    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "dea45d92edb79d8ae2a6177cea305a212d7e607ae2ca9402be56a2188b2a5f7a"},
+    "README.md": {"role": "documentation", "sha256": "4dbfba70c488385c85a0b44bd0dd49aed4b9be2b39de4e4246eddaed645bd5ab"},
+    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "aba5f4719c9932b52a4c7fde3dac4da7ff3b25b9c1414d2f9f12ef9dd07972d3"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
     "schema.json": {"sha256": "dcad435054e16dcd3b50685e3c305312546620e545ba8d65fcac7655175b6176"},
     "LICENSE": {"sha256": "dc6469f092dcb09157fb9997a2f367c12d44f8196bd07321c4450d88774771b2"},
     "threadmark_verify.py": {"sha256": "2f758c6b2477b5547182115f3a9c00b747db9b503a18916f1e3a1da457f92823"},
+    "snapshot_check.py": {"sha256": "49a8e2d3d1d4f4fb0dbb9422d69724fb001ddb999f1aff61018bbeb2de3aa4b5"},
     "manifest.json": {"role": "self-describing inventory; its own digest is intentionally external"},
-    "examples/scenarios.json": {"sha256": "0a262993248730b6a0555584f7bfb60330ea9dfb59eff419ac42f46d3628312e"},
+    "examples/scenarios.json": {"sha256": "e0988b2e4162f7853a2bcdc980a54084d59fa8ccf8dd8b678f98698935ffbf24"},
     "tests/test_yumi_continuity.py": {"sha256": "e563dd3e97ba7e25c2b435d5cb45f17a3e83bd25608392ee02537eb723e94dd9"},
     "tests/test_threadmark_handoff.py": {"sha256": "76aedef1cee34830a20b6479fe041bdbfa7825c0ecab44aabd9841680f21745f"},
-    "tests/test_threadmark_verify.py": {"sha256": "58a69269fc4e6ba5481928e3a360bbace16018de7af63c7598d6075a19feeeab"}
+    "tests/test_threadmark_verify.py": {"sha256": "58a69269fc4e6ba5481928e3a360bbace16018de7af63c7598d6075a19feeeab"},
+    "tests/test_snapshot_check.py": {"sha256": "fe9507d51fb6ba0c663cb34c9c6c98140a8b822e89fc150449094a09e359df46"}
   },
   "accepted_public_origins": {
     "repository": "https://github.com/noqt/noqt",
@@ -53,7 +63,7 @@
     "integrity_limit": "The installer converted all 12 published LF text files to CRLF. LF-normalized content matched, but installed byte hashes differed; inventory SHA-256 values identify the original published LF bytes.",
     "claim_limit": "One observed compatibility check only; no automatic activation, other-host certification, independent discovery, or adoption claim."
   },
-  "packaging_boundary": "Version 1.2.3 changes native-skill task-fit selection framing only. Version 1.2.2 documented one observed Codex compatibility check only. The functional freshness checker remains v1.2, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Version 1.2.1 added native-skill packaging only. The freshness checker packages and reuses those base components; it is not independent validation. Immutable base code metadata may retain the earlier noqt/noqt origin documentation URL.",
+  "packaging_boundary": "Version 1.3.0 adds the snapshot-applicability-check capability. The functional handoff freshness checker remains v1.2, the snapshot applicability checker is v1.0, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Version 1.2.3 changed native-skill task-fit selection framing; version 1.2.2 documented one observed Codex compatibility check; version 1.2.1 added native-skill packaging. Both checkers package and reuse the base components; neither is independent validation. Immutable base code metadata may retain the earlier noqt/noqt origin documentation URL.",
   "limits": {
     "ledger_input_bytes": 65536,
     "threadmark_output_bytes": 16384,
@@ -62,7 +72,10 @@
     "current_heads": 16,
     "revisions": 128,
     "card_input_bytes": 4096,
-    "freshness_check_output_bytes": 16384
+    "freshness_check_output_bytes": 16384,
+    "snapshot_input_bytes": 65536,
+    "snapshot_scope_and_key_length": 256,
+    "snapshot_check_output_bytes": 16384
   },
   "side_effects": {
     "network": false,
@@ -72,7 +85,9 @@
     "executes_input_values": false,
     "dereferences_source_ids": false,
     "freshness_check_recomputes_current_threadmark": true,
-    "freshness_check_authenticates_card_or_ledger": false
+    "freshness_check_authenticates_card_or_ledger": false,
+    "snapshot_check_recomputes_current_threadmark": true,
+    "snapshot_check_authenticates_snapshot_or_ledger": false
   },
-  "claim_boundary": "READY means required-key consistency only within the supplied ledger. UNCHANGED means the supplied ready card snapshot matches a newly resolved supplied ledger; card digest claims remain unauthenticated. No result establishes truth, authenticated provenance, ledger freshness or completeness, permission, safety, task completion, intelligence, adoption, or savings."
+  "claim_boundary": "READY means required-key consistency only within the supplied ledger. UNCHANGED from the handoff checker means the supplied ready card matches a newly resolved supplied ledger; card digest claims remain unauthenticated. UNCHANGED from snapshot_check means only that the supplied scope, exact settings key set, and typed JSON values match the current READY ledger output. Neither result establishes truth, authenticated provenance, ledger freshness or completeness, permission, safety, task completion, intelligence, adoption, or savings."
 }

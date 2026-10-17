@@ -191,5 +191,43 @@
       "expected_status": "DETAIL_REQUIRED",
       "expected_key_status": {"task": "stable"}
     }
+  ],
+  "snapshot_applicability_examples": [
+    {
+      "id": "museum-kiosk-caption-and-volume-snapshot",
+      "purpose": "A fictional ceramics-gallery kiosk checks whether its two display preferences still match the supplied current ledger.",
+      "snapshot": {
+        "scope": "fictional-ceramics-gallery-kiosk",
+        "settings": {
+          "caption_language": "fr-CA",
+          "ambient_volume_percent": 18
+        }
+      },
+      "ledger": {
+        "scope": "fictional-ceramics-gallery-kiosk",
+        "required_keys": ["ambient_volume_percent", "caption_language"],
+        "head_blocks": [
+          {
+            "id": "gallery-display-guide-head",
+            "revision_id": "gallery-display-guide-revision",
+            "source_id": "fictional-display-guide",
+            "assertions": [
+              {
+                "id": "gallery-caption-language-assertion",
+                "key": "caption_language",
+                "value": "fr-CA"
+              },
+              {
+                "id": "gallery-ambient-volume-assertion",
+                "key": "ambient_volume_percent",
+                "value": 18
+              }
+            ]
+          }
+        ]
+      },
+      "expected_status": "UNCHANGED",
+      "expected_exit_code": 0
+    }
   ]
 }

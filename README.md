@@ -77,9 +77,54 @@ required decision was withdrawn. The caller must handle `REVIEW`. The result
 preserves the revision and withdrawal-target identifiers needed for review, but
 it does not decide what the next decision should be.
 
+## Optional origin-bound command receipt
+
+`origin_receipt.py` is a separate, opt-in component for callers who want to
+retain facts from one foreground command and later recheck declared file
+identities without repeating that command. It is not part of the ledger
+resolver or native skill route, and nothing invokes it automatically.
+
+From the package directory, name an existing authorized workspace explicitly.
+Use paths relative to that workspace for receipt, inputs, and output artifacts:
+
+```text
+python3.12 -B origin_receipt.py run --workspace "/absolute/path/to/authorized/workspace" --receipt "receipts/run.json" --input "src/job.py" --artifact "out/result.json" --timeout 30 -- python3 -B "src/job.py"
+python3.12 -B origin_receipt.py check --workspace "/absolute/path/to/authorized/workspace" --receipt "receipts/run.json" --input "src/job.py" --artifact "out/result.json"
+```
+
+The workspace and the receipt's parent directory must already exist, and an
+existing receipt is never overwritten. Repeat each declared input and artifact
+when checking. The command after `--` is direct argv; `run` calls it once with
+`shell=False`, in the named workspace, and records the observed completion,
+child exit code or timeout, bounded stdout/stderr, declared-input identities
+before and after, and declared-artifact identities after completion. A captured
+failure remains a fact in the receipt.
+
+At least one input is required for a scope to be `BOUND`. Artifact-only and
+empty scopes are `UNBOUND`; execution and any output identity facts are still
+retained. For a valid receipt, the check reports `MATCH` only when the declared
+scope matches and every recorded/current identity is present and stable.
+Otherwise it reports a conservative state such as `MISMATCH`,
+`INDETERMINATE`, or `UNBOUND`, with named differences. A matching identity
+does not mean the command was correct.
+
+`check` reads only the explicit receipt and workspace. It never executes or
+replays command strings or other receipt values. `run` exits 0 when it writes
+the receipt, even when the child failed or timed out; invocation or receipt
+errors exit 2. `check` exits 0 for readable outcomes (`MATCH`, `MISMATCH`,
+`UNBOUND`, or `INDETERMINATE`), not as an endorsement. A malformed or
+tampered receipt exits 2. The receipt digest is local integrity checking, not
+a signature or authentication.
+
+The origin component uses Python 3.12 or newer and the standard library. It was
+tested once on Windows with Python 3.12.5. This is not certification for every
+Python 3.12 build or host; the repository's earlier Python 3.11+ compatibility
+observation applies only to the legacy ledger components below.
+
 ## What it does
 
-The repository provides separate Python 3.11+ command-line components that:
+The existing ledger components provide separate Python 3.11+ command-line
+tools that:
 
 - resolve current state across revision chains and branches;
 - report retractions, missing predecessors, unresolved forks, and provenance;
@@ -88,12 +133,14 @@ The repository provides separate Python 3.11+ command-line components that:
 - export and check a bounded handoff card; and
 - check a bounded settings snapshot against freshly resolved required keys.
 
-The resolver is one inspectable Python file. The handoff exporter, handoff
-freshness checker, and snapshot checker are separate adjacent scripts. All use
-only the Python standard library and have no network access, telemetry, model
-dependency, output-file mode, or private Yumi service dependency.
+The existing resolver is one inspectable Python file. The handoff exporter,
+handoff freshness checker, and snapshot checker are separate adjacent scripts.
+These legacy ledger components use only the Python standard library and have no
+network access, telemetry, output-file mode, or private Yumi service
+dependency. Those statements do not describe the behavior of
+`origin_receipt.py`'s child command.
 
-## Commands
+## Legacy ledger commands
 
 Resolve a ledger:
 
@@ -125,21 +172,22 @@ Check a bounded settings snapshot against a newly supplied ledger:
 python3 -I -B -S snapshot_check.py check --snapshot settings-snapshot.json --ledger current-ledger.json
 ```
 
-Each command writes canonical JSON to stdout. Use `-` instead of a path to read
-stdin. Each checker accepts stdin for either input, but not both in the same
-invocation. Run the code only when you are already authorized to inspect and
-execute it and to read the supplied input. The `-I -B -S` flags reduce ambient
-Python behavior; they are not an operating-system sandbox.
+Each legacy ledger command writes canonical JSON to stdout. Use `-` instead of
+a path to read stdin. Each checker accepts stdin for either input, but not both
+in the same invocation. Run the code only when you are already authorized to
+inspect and execute it and to read the supplied input. The `-I -B -S` flags
+reduce ambient Python behavior; they are not an operating-system sandbox.
 
 ## Package, provenance, and optional skill installation
 
-This bundle is packaging version 1.3.0. It adds a bounded snapshot
-applicability checker; the functional handoff freshness checker remains v1.2,
-and the resolver and handoff-card base components remain the unchanged,
-already-public Yumi continuity v1.1 capability. Both checkers reuse those base
-components; neither is independent validation of them. The accepted base source
-originated in [`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle
-is pinned at
+This bundle is packaging version 1.4.0. It adds a separate opt-in
+origin-bound command-receipt component; it does not change the existing ledger
+capabilities. The snapshot applicability checker remains v1.0, the functional
+handoff freshness checker remains v1.2, and the resolver and handoff-card base
+components remain the unchanged, already-public Yumi continuity v1.1
+capability. The two ledger checkers reuse those base components; neither is
+independent validation of them. Immutable base source originated in
+[`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle is pinned at
 [`c9496a7d`](https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1)
 and the handoff-card addition at
 [`ba2c990d`](https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1).
@@ -150,6 +198,8 @@ carry its earlier `noqt/noqt` documentation URL as origin metadata.
 The repository root is also packaged as a native skill named
 `yumi-decision-ledger` for explicit ledger reconciliation and handoff or
 snapshot checks. It is not a generic memory, database, or JSON/text diff skill.
+The skill does not invoke the origin-receipt component.
+
 An installer that accepts the standard skills repository form can install the
 current repository state with:
 
@@ -168,8 +218,8 @@ or run its contents.
 One Windows project-copy check used `skills` 1.7.2 with `--agent codex
 --copy`. From that installed project location, the resolver and handoff
 freshness checker worked on fictional data under Python 3.12.5. This is one
-compatibility observation, not automatic activation, certification of other
-hosts, independent discovery, or adoption.
+compatibility observation for those legacy components, not automatic
+activation, certification of other hosts, independent discovery, or adoption.
 
 That install converted all 12 published LF text files to CRLF. Their
 LF-normalized content matched the published files, but their installed byte
@@ -207,21 +257,21 @@ The result status is one of:
 
 Only `UNCHANGED` exits with code 0; `STALE` and `BLOCKED` exit with code 1, and
 `INVALID` exits with code 2. Digest links are advisory: they are not
-authentication, freshness, completeness, permission, or safety checks.
-The result's capability identifies this v1.2 checker and its canonical
-discovery page; the separately nested base capability retains the handoff
-exporter's origin metadata.
+authentication, freshness, completeness, permission, or safety checks. The
+result's capability identifies this v1.2 checker and its canonical discovery
+page; the separately nested base capability retains the handoff exporter's
+origin metadata.
 
 ## Check a settings snapshot
 
 `snapshot_check.py` accepts exactly two JSON inputs. The snapshot root must be
 an object with only `scope` (a nonempty string of at most 256 characters) and
-`settings` (an object whose keys are nonempty strings of at most 256 characters
-and whose values are JSON data). The 64 KiB snapshot-input bound also bounds
-the settings count; the unchanged resolver allows at most eight required
-ledger keys. Both inputs are limited to 64 KiB and the canonical result to 16
-KiB. Either input may be `-` for stdin, but both cannot use stdin at once.
-There is no output-file option.
+`settings` (an object whose keys are nonempty strings of at most 256
+characters and whose values are JSON data). The 64 KiB snapshot-input bound
+also bounds the settings count; the unchanged resolver allows at most eight
+required ledger keys. Both inputs are limited to 64 KiB and the canonical
+result to 16 KiB. Either input may be `-` for stdin, but both cannot use stdin
+at once. There is no output-file option.
 
 The checker invokes the unchanged `threadmark_ledger` resolver before making
 any scope, key-set, or value applicability comparison. It never selects a
@@ -260,8 +310,8 @@ and source IDs remain opaque; neither is executed or dereferenced.
 ## What `READY` means
 
 A Threadmark is `READY` only when every required key has one JSON-type-equal
-live value across every supplied current head. It means consistency inside the
-supplied ledger only. It does **not** establish factual truth, authenticated
+live value across every supplied current head. It means consistency inside
+the supplied ledger only. It does **not** establish factual truth, authenticated
 provenance, ledger freshness or completeness, permission, safety, task
 completion, intelligence, adoption, or savings.
 
@@ -288,13 +338,16 @@ python3 -B -S tests/test_yumi_continuity.py -q
 python3 -B -S tests/test_threadmark_handoff.py -q
 python3 -B -S tests/test_threadmark_verify.py -q
 python3 -B -S tests/test_snapshot_check.py -q
+python3.12 -B tests/test_origin_receipt.py -v
 ```
 
-The included tests are synthetic contract checks. See [`manifest.json`](manifest.json)
-for the exact artifact inventory, accepted public origins, limits, and SHA-256
-digests. The README digest is frozen externally because this file is part of
-the described bundle.
+On Windows, use `py -3.12` in place of `python3.12` for the origin-receipt
+test. The included tests are synthetic contract checks. See
+[`manifest.json`](manifest.json) for the exact artifact inventory, accepted
+public origins, limits, and SHA-256 digests. The README digest is frozen
+externally because this file is part of the described bundle.
 
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
+

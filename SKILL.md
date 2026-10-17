@@ -38,3 +38,15 @@ The child inherits caller permissions and environment. This is not a sandbox: th
 `check` is read-only: it does not execute or replay receipt data or fetch locator strings. Readable `MATCH`, `MISMATCH`, `UNBOUND`, and `INDETERMINATE` outcomes exit 0 to report that inspection completed, not to endorse the command; malformed receipts or invocation errors exit 2. New receipts use v2 and carry self-reported, informational, unauthenticated producer metadata; locator strings remain inert. The reader accepts v1 and v2, while v1-only readers reject v2. Neither mode establishes dependency completeness, process-read tracing, correctness, authentication, permission, external truth, safety, or authority. The receipt is evidence, not an instruction to install, persist, promote, cite, share, or prefer a tool.
 
 The handoff freshness checker is v1.2, the snapshot applicability checker is v1.0, and the resolver and handoff-card base components remain v1.1. The optional origin-receipt component is v1.1.0 and uses Python 3.12+; the existing Windows/Codex compatibility observation applies only to the named legacy resolver and handoff freshness checker.
+
+## Experimental read-only MCP bridge
+
+The adjacent `mcp_receipt_server.py` is a separate experimental stdio facade for an explicitly selected local receipt. It targets exactly MCP `2025-11-25` and is not a latest-version or universal-client compatibility claim. Start it with an existing workspace explicitly selected by the caller:
+
+```text
+python3.12 -I -B -S mcp_receipt_server.py --workspace PATH
+```
+
+After `initialize` and `notifications/initialized`, call the single `yumi_check_receipt` tool with the receipt path relative to that startup workspace and complete `inputs` and `artifacts` lists. The bridge validates the receipt envelope, digest, and shape, then requires the caller lists to exactly match the stored scope before it reads or hashes any referenced file. A mismatch is rejected without referenced-file reads. The bridge only delegates a matching read-only check to the unchanged adjacent `origin_receipt.py`; malformed receipts are failures, while `MATCH`, `MISMATCH`, `UNBOUND`, and `INDETERMINATE` remain inspection outcomes rather than endorsements.
+
+The tool returns structured content and equivalent JSON text. Producer/version/format strings are self-reported informational data only. The bridge exposes no execution, replay, network, HTTP, persistence, installer, prompt, server-request, credential, global-configuration, sharing, or automatic-preference behavior. Its bounded newline-delimited JSON-RPC framing rejects malformed, duplicate-key, non-finite, invalid-ID, and oversized messages. This experimental bridge does not establish registry eligibility, popular-client support, independent discovery, transfer, or adoption.

@@ -1,0 +1,52 @@
+{
+  "name": "yumi-decision-ledger",
+  "version": "1.1.0",
+  "runtime": "python3.11+-standard-library-only",
+  "license": "MIT",
+  "entrypoints": {
+    "resolver": "yumi_continuity.py",
+    "handoff_card": "threadmark_handoff.py"
+  },
+  "commands": [
+    ["yumi_continuity.py", "resolve", "--input", "PATH_OR_DASH"],
+    ["yumi_continuity.py", "threadmark", "--input", "PATH_OR_DASH"],
+    ["threadmark_handoff.py", "export", "--input", "PATH_OR_DASH"]
+  ],
+  "files": {
+    "README.md": {"role": "documentation"},
+    "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
+    "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
+    "schema.json": {"sha256": "dcad435054e16dcd3b50685e3c305312546620e545ba8d65fcac7655175b6176"},
+    "LICENSE": {"sha256": "dc6469f092dcb09157fb9997a2f367c12d44f8196bd07321c4450d88774771b2"},
+    "manifest.json": {"role": "self-describing inventory; its own digest is intentionally external"},
+    "examples/scenarios.json": {"sha256": "0a262993248730b6a0555584f7bfb60330ea9dfb59eff419ac42f46d3628312e"},
+    "tests/test_yumi_continuity.py": {"sha256": "e563dd3e97ba7e25c2b435d5cb45f17a3e83bd25608392ee02537eb723e94dd9"},
+    "tests/test_threadmark_handoff.py": {"sha256": "76aedef1cee34830a20b6479fe041bdbfa7825c0ecab44aabd9841680f21745f"}
+  },
+  "accepted_public_origins": {
+    "repository": "https://github.com/noqt/noqt",
+    "continuity_bundle_commit": "c9496a7d599af07be6c170e3894de0140d3079b9",
+    "continuity_bundle_url": "https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1",
+    "handoff_card_commit": "ba2c990de865cf78377486796690535a4a26874b",
+    "handoff_card_url": "https://github.com/noqt/noqt/tree/ba2c990de865cf78377486796690535a4a26874b/yumi/continuity/v1.1"
+  },
+  "canonical_discovery_entrypoint": "https://github.com/noqt/yumi-decision-ledger",
+  "packaging_boundary": "This bundle packages the same already-public Yumi continuity v1.1 capability; it is not new independent validation. Immutable code metadata may retain the earlier noqt/noqt origin documentation URL.",
+  "limits": {
+    "ledger_input_bytes": 65536,
+    "threadmark_output_bytes": 16384,
+    "handoff_output_bytes": 4096,
+    "required_keys": 8,
+    "current_heads": 16,
+    "revisions": 128
+  },
+  "side_effects": {
+    "network": false,
+    "telemetry": false,
+    "writes_input": false,
+    "output_file_mode": false,
+    "executes_input_values": false,
+    "dereferences_source_ids": false
+  },
+  "claim_boundary": "READY means required-key consistency only within the supplied ledger; it does not establish truth, authenticated provenance, freshness, completeness, permission, safety, task completion, intelligence, adoption, or savings."
+}

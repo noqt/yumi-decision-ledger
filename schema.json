@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/noqt/noqt/yumi/continuity/v1.1/schema.json",
+  "title": "Yumi Threadmark v1.1 ledger",
+  "description": "A bounded, offline ledger for a compact handoff receipt. Values and source identifiers are opaque data.",
+  "type": "object",
+  "required": ["scope", "required_keys"],
+  "properties": {
+    "schema": {"type": "string"},
+    "scope": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "required_keys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 4096}
+    },
+    "required": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 4096}
+    },
+    "keys": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 4096}
+    },
+    "heads": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256}
+    },
+    "current_heads": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 256}
+    },
+    "revisions": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {"$ref": "#/$defs/revision"}
+    },
+    "head_blocks": {
+      "type": ["array", "object"],
+      "maxItems": 16,
+      "items": {"$ref": "#/$defs/headBlock"},
+      "additionalProperties": {"$ref": "#/$defs/headBlock"}
+    },
+    "assertions": {
+      "type": ["array", "object"],
+      "items": {"$ref": "#/$defs/assertion"},
+      "additionalProperties": {}
+    },
+    "live_assertions": {
+      "type": ["array", "object"],
+      "items": {"$ref": "#/$defs/assertion"},
+      "additionalProperties": {}
+    },
+    "withdrawals": {
+      "type": "array",
+      "items": {"anyOf": [{"type": "string"}, {"$ref": "#/$defs/withdrawal"}]}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "referenceList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "assertion": {
+      "type": "object",
+      "required": ["key"],
+      "properties": {
+        "id": {"$ref": "#/$defs/source"},
+        "assertion_id": {"$ref": "#/$defs/source"},
+        "key": {"$ref": "#/$defs/source"},
+        "name": {"$ref": "#/$defs/source"},
+        "state": {
+          "enum": [
+            "asserted",
+            "assert",
+            "set",
+            "active",
+            "withdrawn",
+            "withdraw",
+            "retracted",
+            "retract"
+          ]
+        },
+        "status": {"type": "string"},
+        "op": {"type": "string"},
+        "value": {},
+        "target": {"$ref": "#/$defs/source"},
+        "reason": {"type": "string", "maxLength": 4096},
+        "supersedes": {"$ref": "#/$defs/referenceList"},
+        "source_id": {"$ref": "#/$defs/source"},
+        "source_ref": {"$ref": "#/$defs/source"},
+        "source_label": {"type": "string", "maxLength": 4096},
+        "source": {"type": "string", "maxLength": 4096}
+      },
+      "additionalProperties": true
+    },
+    "withdrawal": {
+      "type": "object",
+      "properties": {
+        "target": {"$ref": "#/$defs/source"},
+        "key": {"$ref": "#/$defs/source"},
+        "reason": {"type": "string", "maxLength": 4096},
+        "source_id": {"$ref": "#/$defs/source"},
+        "source_ref": {"$ref": "#/$defs/source"},
+        "source_label": {"type": "string", "maxLength": 4096}
+      },
+      "additionalProperties": true
+    },
+    "revision": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/source"},
+        "parent": {"type": ["string", "null"], "maxLength": 256},
+        "parent_id": {"type": ["string", "null"], "maxLength": 256},
+        "sequence": {"type": "integer"},
+        "supersedes": {"$ref": "#/$defs/referenceList"},
+        "assertions": {"type": "array", "items": {"$ref": "#/$defs/assertion"}},
+        "facts": {"type": "array", "items": {"$ref": "#/$defs/assertion"}},
+        "live_assertions": {"type": "array", "items": {"$ref": "#/$defs/assertion"}},
+        "withdrawals": {
+          "type": "array",
+          "items": {"anyOf": [{"type": "string"}, {"$ref": "#/$defs/withdrawal"}]}
+        },
+        "retracts": {"$ref": "#/$defs/referenceList"},
+        "retractions": {"$ref": "#/$defs/referenceList"},
+        "source_id": {"$ref": "#/$defs/source"},
+        "source_ref": {"$ref": "#/$defs/source"},
+        "source_label": {"type": "string", "maxLength": 4096},
+        "source": {"type": "string", "maxLength": 4096}
+      },
+      "additionalProperties": true
+    },
+    "headBlock": {
+      "type": "object",
+      "properties": {
+        "id": {"$ref": "#/$defs/source"},
+        "head_id": {"$ref": "#/$defs/source"},
+        "revision_id": {"$ref": "#/$defs/source"},
+        "assertions": {"type": ["array", "object"]},
+        "live_assertions": {"type": ["array", "object"]},
+        "facts": {"type": ["array", "object"]},
+        "withdrawals": {"type": ["array", "object"]},
+        "retractions": {"type": ["array", "object"]},
+        "source_id": {"$ref": "#/$defs/source"},
+        "source_ref": {"$ref": "#/$defs/source"},
+        "source_label": {"type": "string", "maxLength": 4096}
+      },
+      "additionalProperties": true
+    }
+  }
+}

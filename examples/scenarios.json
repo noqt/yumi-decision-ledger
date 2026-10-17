@@ -1,0 +1,195 @@
+{
+  "schema": "yumi.continuity.threadmark.scenarios.v1.1",
+  "description": "Synthetic software-workflow Threadmark examples. They contain no private ledger or personal data.",
+  "scenarios": [
+    {
+      "id": "python-review",
+      "domain": "python",
+      "purpose": "A Python agent resumes a review handoff.",
+      "ledger": {
+        "scope": "python-review",
+        "required_keys": ["task", "decision"],
+        "head_blocks": [
+          {
+            "id": "python-head",
+            "revision_id": "python-r1",
+            "source_id": "synthetic-python",
+            "assertions": [
+              {"id": "python-task", "key": "task", "value": "review"},
+              {"id": "python-decision", "key": "decision", "value": "continue"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "READY"
+    },
+    {
+      "id": "javascript-build",
+      "domain": "javascript",
+      "purpose": "A JavaScript agent resumes a bounded build check.",
+      "ledger": {
+        "scope": "javascript-build",
+        "required_keys": ["task", "decision"],
+        "head_blocks": [
+          {
+            "id": "javascript-head",
+            "revision_id": "javascript-r1",
+            "source_id": "synthetic-javascript",
+            "assertions": [
+              {"id": "javascript-task", "key": "task", "value": "build"},
+              {"id": "javascript-decision", "key": "decision", "value": "inspect"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "READY"
+    },
+    {
+      "id": "shell-deploy",
+      "domain": "shell",
+      "purpose": "A shell agent receives the same practical handoff shape.",
+      "ledger": {
+        "scope": "shell-deploy",
+        "required_keys": ["task", "decision"],
+        "head_blocks": [
+          {
+            "id": "shell-head",
+            "revision_id": "shell-r1",
+            "source_id": "synthetic-shell",
+            "assertions": [
+              {"id": "shell-task", "key": "task", "value": "verify"},
+              {"id": "shell-decision", "key": "decision", "value": "continue"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "READY"
+    },
+    {
+      "id": "review-board",
+      "domain": "review",
+      "purpose": "A review agent compares all supplied heads before proceeding.",
+      "ledger": {
+        "scope": "review-board",
+        "required_keys": ["task", "decision"],
+        "head_blocks": [
+          {
+            "id": "review-left",
+            "revision_id": "review-r1",
+            "source_id": "synthetic-review-left",
+            "assertions": [
+              {"id": "review-left-task", "key": "task", "value": "review"},
+              {"id": "review-left-decision", "key": "decision", "value": "continue"}
+            ]
+          },
+          {
+            "id": "review-right",
+            "revision_id": "review-r2",
+            "source_id": "synthetic-review-right",
+            "assertions": [
+              {"id": "review-right-task", "key": "task", "value": "review"},
+              {"id": "review-right-decision", "key": "decision", "value": "continue"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "READY"
+    },
+    {
+      "id": "conflicting-live-values",
+      "domain": "edge",
+      "purpose": "Two live values for one required key require review.",
+      "ledger": {
+        "scope": "conflict",
+        "required_keys": ["decision"],
+        "head_blocks": [
+          {
+            "id": "conflict-head",
+            "assertions": [
+              {"id": "conflict-a", "key": "decision", "value": "continue"},
+              {"id": "conflict-b", "key": "decision", "value": "pause"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "REVIEW",
+      "expected_key_status": {"decision": "conflicting"}
+    },
+    {
+      "id": "withdrawn-decision",
+      "domain": "edge",
+      "purpose": "A supplied withdrawal remains visible and blocks readiness.",
+      "ledger": {
+        "scope": "withdrawal",
+        "required_keys": ["decision"],
+        "revisions": [
+          {
+            "id": "withdraw-r1",
+            "assertions": [
+              {"id": "withdraw-a", "key": "decision", "value": "continue"}
+            ]
+          },
+          {
+            "id": "withdraw-r2",
+            "parent": "withdraw-r1",
+            "withdrawals": [{"target": "withdraw-a", "reason": "supplied correction"}]
+          }
+        ]
+      },
+      "expected_status": "REVIEW",
+      "expected_key_status": {"decision": "withdrawn"}
+    },
+    {
+      "id": "missing-required-key",
+      "domain": "edge",
+      "purpose": "A required key absent from the supplied head is not inferred.",
+      "ledger": {
+        "scope": "missing",
+        "required_keys": ["task", "decision"],
+        "head_blocks": [
+          {
+            "id": "missing-head",
+            "assertions": [
+              {"id": "missing-task", "key": "task", "value": "review"}
+            ]
+          }
+        ]
+      },
+      "expected_status": "REVIEW",
+      "expected_key_status": {"decision": "missing"}
+    },
+    {
+      "id": "typed-conflict",
+      "domain": "edge",
+      "purpose": "Boolean and integer values are not coerced to equality.",
+      "ledger": {
+        "scope": "typed",
+        "required_keys": ["attempt"],
+        "head_blocks": [
+          {
+            "id": "typed-left",
+            "assertions": [{"id": "typed-a", "key": "attempt", "value": 1}]
+          },
+          {
+            "id": "typed-right",
+            "assertions": [{"id": "typed-b", "key": "attempt", "value": true}]
+          }
+        ]
+      },
+      "expected_status": "REVIEW",
+      "expected_key_status": {"attempt": "conflicting"}
+    },
+    {
+      "id": "bounded-detail",
+      "domain": "edge",
+      "purpose": "Large supplied detail must request a smaller receipt rather than truncate.",
+      "ledger_shape": {
+        "scope": "bounded-detail",
+        "required_keys": ["task"],
+        "one_assertion_value": "synthetic value repeated enough to exceed the 16 KiB output cap"
+      },
+      "expected_status": "DETAIL_REQUIRED",
+      "expected_key_status": {"task": "stable"}
+    }
+  ]
+}

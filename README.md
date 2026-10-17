@@ -3,10 +3,11 @@
 Resume an agent task from an explicit revision ledger without silently treating
 superseded, withdrawn, missing, or conflicting assertions as current.
 
-This bundle is version 1.2.0. Its resolver and handoff-card base components are
-the unchanged, already-public Yumi continuity v1.1 capability. The newly
-authored freshness checker is an extension that packages and reuses those base
-components; it is not independent validation of them. The accepted base source originated in
+This bundle is packaging version 1.2.1. The functional freshness checker
+remains v1.2, and its resolver and handoff-card base components remain the
+unchanged, already-public Yumi continuity v1.1 capability. The freshness
+checker packages and reuses those base components; it is not independent
+validation of them. The accepted base source originated in
 [`noqt/noqt`](https://github.com/noqt/noqt): the resolver bundle is pinned at
 [`c9496a7d`](https://github.com/noqt/noqt/tree/c9496a7d599af07be6c170e3894de0140d3079b9/yumi/continuity/v1.1)
 and the handoff-card addition at
@@ -24,6 +25,25 @@ This standalone Python 3.11+ command-line tool:
 
 It uses only the Python standard library. It has no network access, telemetry,
 model dependency, output-file mode, or private Yumi service dependency.
+
+## Native Agent Skill
+
+The repository root is a native skill named `yumi-decision-ledger`. Use it for
+explicit decision/revision-ledger reconciliation or for checking whether an
+agent handoff has become stale; it is not a generic memory or database skill.
+
+An installer that accepts the standard skills repository form can install the
+current repository state with:
+
+```text
+npx skills add noqt/yumi-decision-ledger --skill yumi-decision-ledger
+```
+
+That convenience command is not a commit pin. When reproducibility matters,
+inspect an exact commit first, verify `SKILL.md` and the manifest inventory,
+then install from that pinned local checkout using the installer's local-source
+flow. Installation does not grant permission to inspect a ledger or run its
+contents.
 
 ## Run
 

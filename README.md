@@ -45,6 +45,19 @@ then install from that pinned local checkout using the installer's local-source
 flow. Installation does not grant permission to inspect a ledger or run its
 contents.
 
+### Observed Codex compatibility
+
+One Windows project-copy check used `skills` 1.7.2 with `--agent codex
+--copy`. From that installed project location, the resolver and handoff
+freshness checker worked on fictional data under Python 3.12.5. This is one
+compatibility observation, not automatic activation, certification of other
+hosts, independent discovery, or adoption.
+
+That install converted all 12 published LF text files to CRLF. Their
+LF-normalized content matched the published files, but their installed byte
+hashes did not. SHA-256 values in [`manifest.json`](manifest.json) identify the
+original published LF bytes, not byte-identical Windows copies.
+
 ## Run
 
 Resolve a ledger:

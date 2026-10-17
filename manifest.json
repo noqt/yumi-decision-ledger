@@ -1,7 +1,7 @@
 {
   "name": "yumi-decision-ledger",
-  "version": "1.2.2",
-  "release_kind": "codex-compatibility-documentation-only",
+  "version": "1.2.3",
+  "release_kind": "task-fit-description-only",
   "base_component_version": "1.1.0",
   "runtime": "python3.11+-standard-library-only",
   "license": "MIT",
@@ -24,7 +24,7 @@
   ],
   "files": {
     "README.md": {"role": "documentation"},
-    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "53dd4706665ea0b598f05c344f4983737933da3529810c6a365984124e1c1c75"},
+    "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "dea45d92edb79d8ae2a6177cea305a212d7e607ae2ca9402be56a2188b2a5f7a"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
     "schema.json": {"sha256": "dcad435054e16dcd3b50685e3c305312546620e545ba8d65fcac7655175b6176"},
@@ -53,7 +53,7 @@
     "integrity_limit": "The installer converted all 12 published LF text files to CRLF. LF-normalized content matched, but installed byte hashes differed; inventory SHA-256 values identify the original published LF bytes.",
     "claim_limit": "One observed compatibility check only; no automatic activation, other-host certification, independent discovery, or adoption claim."
   },
-  "packaging_boundary": "Version 1.2.2 documents one observed Codex compatibility check only. The functional freshness checker remains v1.2, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Version 1.2.1 added native-skill packaging only. The freshness checker packages and reuses those base components; it is not independent validation. Immutable base code metadata may retain the earlier noqt/noqt origin documentation URL.",
+  "packaging_boundary": "Version 1.2.3 changes native-skill task-fit selection framing only. Version 1.2.2 documented one observed Codex compatibility check only. The functional freshness checker remains v1.2, and the resolver and handoff-card base components remain the unchanged already-public Yumi continuity v1.1 capability. Version 1.2.1 added native-skill packaging only. The freshness checker packages and reuses those base components; it is not independent validation. Immutable base code metadata may retain the earlier noqt/noqt origin documentation URL.",
   "limits": {
     "ledger_input_bytes": 65536,
     "threadmark_output_bytes": 16384,

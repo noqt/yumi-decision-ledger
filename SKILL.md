@@ -1,6 +1,6 @@
 ---
 name: yumi-decision-ledger
-description: Reconcile agent-task decision and revision ledgers when handoffs may be stale, assertions were superseded or retracted, or current branch heads conflict. Use with explicitly supplied ledger or handoff-card records; not for generic memory, chat extraction, database queries, or establishing external truth.
+description: Reconcile explicitly supplied decision/revision ledgers when agent runs disagree about the current decision, or check whether a handoff is stale after supersession, retraction or conflicting heads. Not an ordinary JSON/text diff, generic memory/chat extractor, database query tool, or external-truth check.
 ---
 
 # Yumi Decision Ledger

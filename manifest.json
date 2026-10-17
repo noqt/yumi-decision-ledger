@@ -1,7 +1,7 @@
 {
   "name": "yumi-decision-ledger",
-  "version": "1.4.0",
-  "release_kind": "additive-origin-bound-command-receipt-capability",
+  "version": "1.5.0",
+  "release_kind": "additive-self-describing-origin-receipt-v2",
   "base_component_version": "1.1.0",
   "runtime": "component-specific; legacy ledger tools use Python 3.11+ standard library; origin receipt uses Python 3.12+ standard library",
   "license": "MIT",
@@ -26,10 +26,13 @@
   },
   "origin_receipt_capability": {
     "capability": "origin-bound-command-receipt",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "maturity": "experimental-opt-in",
     "descriptor": "origin-receipt.json",
-    "doc_url": "https://github.com/noqt/yumi-decision-ledger"
+    "doc_url": "https://github.com/noqt/yumi-decision-ledger",
+    "writer_format": "origin-result-receipt/v2",
+    "reader_formats": ["origin-result-receipt/v1", "origin-result-receipt/v2"],
+    "v1_only_readers_accept_v2": false
   },
   "commands": [
     ["yumi_continuity.py", "resolve", "--input", "PATH_OR_DASH"],
@@ -41,7 +44,7 @@
     ["origin_receipt.py", "check", "--workspace", "PATH", "--receipt", "REL_PATH", "[--input REL_PATH]", "[--artifact REL_PATH]"]
   ],
   "files": {
-    "README.md": {"role": "documentation", "sha256": "2548834fdffbfa188f7e0cfd31934b58a1c30385982f0cc2791c550a471bd6f8"},
+    "README.md": {"role": "documentation", "sha256": "935566d4c0afb2fa3ee9513014ad15a70648a3027b0e8d310eda4035717a25fe"},
     "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "aba5f4719c9932b52a4c7fde3dac4da7ff3b25b9c1414d2f9f12ef9dd07972d3"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
@@ -55,9 +58,9 @@
     "tests/test_threadmark_handoff.py": {"sha256": "76aedef1cee34830a20b6479fe041bdbfa7825c0ecab44aabd9841680f21745f"},
     "tests/test_threadmark_verify.py": {"sha256": "58a69269fc4e6ba5481928e3a360bbace16018de7af63c7598d6075a19feeeab"},
     "tests/test_snapshot_check.py": {"sha256": "fe9507d51fb6ba0c663cb34c9c6c98140a8b822e89fc150449094a09e359df46"},
-    "origin_receipt.py": {"role": "origin-bound command runner and read-only receipt checker", "sha256": "09394817e969ed7533a0c570dcd47162287c34281b415d397927971710232562"},
-    "tests/test_origin_receipt.py": {"role": "focused synthetic conservative-scope regressions", "sha256": "6238ad747efbb784044e7827ad8a21052b37a7f1218d16685339c268536ebee1"},
-    "origin-receipt.json": {"role": "origin-receipt capability descriptor", "sha256": "42df9cd92d94b81b8091d72213447a5eb4913a4419af711dc9dee59494b426a2"}
+    "origin_receipt.py": {"role": "origin-bound command runner writing v2 and reading v1/v2 receipts", "sha256": "1fce13a6f2bc0651f2df7e3ec6bb83898b31b0e2a9439155e642987ee428e19d"},
+    "tests/test_origin_receipt.py": {"role": "original command tests and pure producer metadata/schema regressions", "sha256": "aa2357fe23275e783bfc21293f1e19e1dc27372cb9c91ea5ff28166f9bcf8ed3"},
+    "origin-receipt.json": {"role": "v2 writer and v1/v2 reader capability descriptor", "sha256": "cfadfdb294ce79f21f5fd55c38686c48d7cad85aa34fb889db0ecc8d9cd7db3f"}
   },
   "accepted_public_origins": {
     "repository": "https://github.com/noqt/noqt",

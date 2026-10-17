@@ -1,10 +1,32 @@
 {
   "capability": "origin-bound-command-receipt",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "maturity": "experimental-opt-in",
   "runtime": "python3.12+-standard-library-only",
   "entrypoint": "origin_receipt.py",
   "authorship": "NOQT-authored independent component",
+  "receipt_formats": {
+    "writer": "origin-result-receipt/v2",
+    "reader_accepts": ["origin-result-receipt/v1", "origin-result-receipt/v2"],
+    "v1_only_reader_accepts_v2": false
+  },
+  "producer_metadata": {
+    "status": "self-reported, informational, and unauthenticated",
+    "writer_values": {
+      "name": "origin-receipt",
+      "software_version": "1.1.0",
+      "repository": "https://github.com/noqt/yumi-decision-ledger",
+      "format_documentation": "origin-receipt.json"
+    },
+    "required_fields": ["name", "software_version", "repository", "format_documentation"],
+    "maximum_characters": {
+      "name": 64,
+      "software_version": 64,
+      "repository": 512,
+      "format_documentation": 512
+    },
+    "locator_handling": "String data only; the reader never fetches or executes locator values."
+  },
   "commands": {
     "run": {
       "description": "Execute caller-supplied argv once in the explicit workspace and write a bounded receipt of observed facts.",

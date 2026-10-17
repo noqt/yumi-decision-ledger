@@ -17,7 +17,22 @@ from datetime import datetime, timezone
 from typing import Any
 
 
-SCHEMA = "origin-result-receipt/v1"
+SCHEMA_V1 = "origin-result-receipt/v1"
+SCHEMA_V2 = "origin-result-receipt/v2"
+SCHEMA = SCHEMA_V2
+SOFTWARE_VERSION = "1.1.0"
+PRODUCER_FIELDS = {
+    "name": 64,
+    "software_version": 64,
+    "repository": 512,
+    "format_documentation": 512,
+}
+PRODUCER_METADATA = {
+    "name": "origin-receipt",
+    "software_version": SOFTWARE_VERSION,
+    "repository": "https://github.com/noqt/yumi-decision-ledger",
+    "format_documentation": "origin-receipt.json",
+}
 MAX_CAPTURE_BYTES = 64 * 1024
 MAX_RECEIPT_BYTES = 1024 * 1024
 MAX_FILE_BYTES = 10 * 1024 * 1024
@@ -31,6 +46,21 @@ HEX_256 = re.compile(r"^[0-9a-f]{64}$")
 
 class ReceiptError(ValueError):
     pass
+
+
+def _check_producer_metadata(metadata: Any) -> None:
+    if not isinstance(metadata, dict) or set(metadata) != set(PRODUCER_FIELDS):
+        raise ReceiptError("receipt producer metadata is malformed")
+    for field, maximum in PRODUCER_FIELDS.items():
+        value = metadata[field]
+        if (
+            not isinstance(value, str)
+            or not value
+            or value != value.strip()
+            or len(value) > maximum
+            or any(ord(char) < 32 or ord(char) == 127 for char in value)
+        ):
+            raise ReceiptError(f"receipt producer field is malformed: {field}")
 
 
 def _utc_now() -> str:
@@ -323,6 +353,7 @@ def run_command(
 
     body: dict[str, Any] = {
         "schema": SCHEMA,
+        "producer": dict(PRODUCER_METADATA),
         "run_id": uuid.uuid4().hex,
         "recorded_at_utc": finished_at,
         "scope": {
@@ -359,11 +390,21 @@ def run_command(
 
 
 def _check_body_shape(body: Any) -> None:
-    required = {
+    required_v1 = {
         "schema", "run_id", "recorded_at_utc", "scope", "execution",
         "inputs_before", "inputs_after", "artifacts_after",
     }
-    if not isinstance(body, dict) or set(body) != required or body.get("schema") != SCHEMA:
+    if not isinstance(body, dict):
+        raise ReceiptError("receipt body has an unsupported or malformed schema")
+    schema = body.get("schema")
+    if schema == SCHEMA_V1:
+        required = required_v1
+    elif schema == SCHEMA_V2:
+        required = required_v1 | {"producer"}
+        _check_producer_metadata(body.get("producer"))
+    else:
+        raise ReceiptError("receipt body has an unsupported or malformed schema")
+    if set(body) != required:
         raise ReceiptError("receipt body has an unsupported or malformed schema")
     if not isinstance(body["run_id"], str) or not re.fullmatch(r"[0-9a-f]{32}", body["run_id"]):
         raise ReceiptError("receipt run_id is malformed")
@@ -551,6 +592,9 @@ def check_receipt(
         "receipt": receipt_rel,
         "run_id": body["run_id"],
         "receipt_valid": True,
+        "producer_metadata_status": "self_reported" if "producer" in body else "not_recorded",
+        "producer_metadata": body.get("producer"),
+        "producer_metadata_limit": "Informational strings; not authentication or authority.",
         "execution_status": body["execution"]["status"],
         "recorded_exit_code": body["execution"]["exit_code"],
         "recorded_timed_out": body["execution"]["timed_out"],

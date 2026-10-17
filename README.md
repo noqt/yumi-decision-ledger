@@ -100,6 +100,12 @@ child exit code or timeout, bounded stdout/stderr, declared-input identities
 before and after, and declared-artifact identities after completion. A captured
 failure remains a fact in the receipt.
 
+The child inherits the caller's environment and permissions; this is not a
+sandbox and imposes no child network or workspace-write restriction. The
+receipt records argv and bounded stdout/stderr, which can expose sensitive
+values; review the command and output before retaining a receipt. Environment
+variables and a full transcript are not stored.
+
 At least one input is required for a scope to be `BOUND`. Artifact-only and
 empty scopes are `UNBOUND`; execution and any output identity facts are still
 retained. For a valid receipt, the check reports `MATCH` only when the declared
@@ -115,6 +121,18 @@ errors exit 2. `check` exits 0 for readable outcomes (`MATCH`, `MISMATCH`,
 `UNBOUND`, or `INDETERMINATE`), not as an endorsement. A malformed or
 tampered receipt exits 2. The receipt digest is local integrity checking, not
 a signature or authentication.
+
+New receipts use format `origin-result-receipt/v2` and include a bounded
+`producer` object with `name`, `software_version`, `repository`, and
+`format_documentation` strings. The current self-reported values identify
+`origin-receipt` version `1.1.0`, its repository locator, and the relative
+descriptor name `origin-receipt.json`. These values are informational, not
+authenticated. The reader validates their shape and reports them as
+`self_reported`; locator strings remain data and are never fetched or executed.
+
+The reader continues to accept `origin-result-receipt/v1` receipts that do not
+contain producer metadata and reports that metadata as `not_recorded`. A reader
+that accepts only v1 does not accept newly written v2 receipts.
 
 The origin component uses Python 3.12 or newer and the standard library. It was
 tested once on Windows with Python 3.12.5. This is not certification for every

@@ -183,5 +183,79 @@ class ConservativeScopeTests(unittest.TestCase):
             self.assertIn(("output.bin", "unverifiable_identity"), kinds)
 
 
+class SelfDescribingReceiptShapeTests(unittest.TestCase):
+    """Synthetic shape fixtures only; these tests perform no capture or I/O."""
+
+    @staticmethod
+    def _body(schema):
+        body = {
+            "schema": schema,
+            "run_id": "a" * 32,
+            "recorded_at_utc": "2026-10-17T00:00:00.000Z",
+            "scope": {"inputs": [], "artifacts": [], "binding": "UNBOUND"},
+            "execution": {
+                "argv": ["synthetic-command"],
+                "status": "completed",
+                "exit_code": 0,
+                "timed_out": False,
+                "launch_error": None,
+                "started_at_utc": "2026-10-17T00:00:00.000Z",
+                "finished_at_utc": "2026-10-17T00:00:00.000Z",
+                "elapsed_ms": 0,
+                "timeout_seconds": 1.0,
+                "stdout": {"text": "", "bytes_total": 0, "truncated": False},
+                "stderr": {"text": "", "bytes_total": 0, "truncated": False},
+            },
+            "inputs_before": {},
+            "inputs_after": {},
+            "artifacts_after": {},
+        }
+        if schema == origin.SCHEMA_V2:
+            body["producer"] = dict(origin.PRODUCER_METADATA)
+        return body
+
+    def test_v1_without_producer_and_v2_with_producer_are_accepted(self):
+        legacy = self._body(origin.SCHEMA_V1)
+        origin._check_body_shape(legacy)
+        self.assertNotIn("producer", legacy)
+
+        current = self._body(origin.SCHEMA_V2)
+        origin._check_body_shape(current)
+        self.assertEqual(set(current["producer"]), set(origin.PRODUCER_FIELDS))
+
+    def test_schema_requires_exact_producer_shape(self):
+        missing = self._body(origin.SCHEMA_V2)
+        del missing["producer"]
+        with self.assertRaises(origin.ReceiptError):
+            origin._check_body_shape(missing)
+
+        extra = self._body(origin.SCHEMA_V1)
+        extra["producer"] = dict(origin.PRODUCER_METADATA)
+        with self.assertRaises(origin.ReceiptError):
+            origin._check_body_shape(extra)
+
+        malformed = self._body(origin.SCHEMA_V2)
+        del malformed["producer"]["software_version"]
+        with self.assertRaises(origin.ReceiptError):
+            origin._check_body_shape(malformed)
+
+    def test_producer_bounds_and_locator_values_are_data(self):
+        metadata = dict(origin.PRODUCER_METADATA)
+        metadata["repository"] = "python -c must-not-run"
+        origin._check_producer_metadata(metadata)
+        self.assertEqual(metadata["repository"], "python -c must-not-run")
+
+        for field, bad_value in (
+            ("repository", "x" * (origin.PRODUCER_FIELDS["repository"] + 1)),
+            ("name", " padded "),
+            ("format_documentation", "line\nbreak"),
+        ):
+            invalid = dict(origin.PRODUCER_METADATA)
+            invalid[field] = bad_value
+            with self.subTest(field=field):
+                with self.assertRaises(origin.ReceiptError):
+                    origin._check_producer_metadata(invalid)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

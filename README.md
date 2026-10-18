@@ -411,6 +411,8 @@ Published-wheel evidence, not a compatibility checker. For browser- or runtime-c
 
 - [Anonymous read-only JSON API and descriptor](https://noqt.no-qt.chatgpt.site/api/yumi/wheel-evidence), with a URL-encoded `request` GET or an `application/json` POST.
 - [Request format, limits, results and scope](https://noqt.no-qt.chatgpt.site/yumi/wheel-evidence).
+- Native MCP endpoint: `https://noqt.no-qt.chatgpt.site/api/yumi/mcp` — anonymous, stateless JSON-RPC POST; no account, session or SSE.
+- MCP tool: `pypi_wheel_evidence`, using the same `releases` and `tags` request arguments and provider-reported metadata limitations below.
 - [Independent JavaScript collector](wheel-evidence/wheel-evidence.mjs) and [focused mocked tests](wheel-evidence/wheel-evidence.test.mjs), under this repository's MIT license. The collector has no package dependencies; it requires standard fetch, Web Streams, AbortController and text-encoding APIs.
 
 The exact request keys are `releases` and `tags`. Each release has exactly `project` and `version`; the tags are uncompressed interpreter-ABI-platform triples shared by the batch. Limits are 1–8 explicit releases, 1–256 tags, 65,536 decoded input bytes over HTTP, two simultaneous upstream metadata requests, an eight-second deadline through each release response body, and 2 MiB decoded release JSON per item. Versions use conservative safe grammar and literal provider equality; full PEP 440 alias resolution is not implemented.

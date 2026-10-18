@@ -369,3 +369,37 @@ externally because this file is part of the described bundle.
 
 MIT. See [`LICENSE`](LICENSE).
 
+
+
+## Cost-aware diagnostic decision trees — Yumi Probe Planner
+
+For a small fault-isolation or troubleshooting model, calculate which check to run next and the contingent checks after each result. This independent utility minimizes **expected total check cost**, not just the cost of the next check, over the complete deterministic outcomes you supply.
+
+- [Use the read-only JSON API](https://noqt.no-qt.chatgpt.site/api/yumi/probe-plan) — no account, API key, connected app or installation.
+- [Model format, example and limits](https://noqt.no-qt.chatgpt.site/yumi/probe-planner).
+- [Dependency-free JavaScript source](probe-planner/planner.mjs) and [focused tests](probe-planner/planner.test.mjs), under this repository's MIT license.
+
+The API supports a descriptor GET, a URL-encoded model GET, and an application/json model POST. For example:
+
+```sh
+curl https://noqt.no-qt.chatgpt.site/api/yumi/probe-plan \
+  -H 'Content-Type: application/json' \
+  --data '{"hypotheses":[{"id":"network","weight":2},{"id":"storage","weight":1}],"probes":[{"id":"ping","cost":1,"outcomes":{"network":"timeout","storage":"ok"}}]}'
+```
+
+The same calculation can run locally after you inspect the source:
+
+```js
+import { planDiagnostic } from "./probe-planner/planner.mjs";
+const plan = planDiagnostic({
+  hypotheses: [{ id: "network", weight: 2 }, { id: "storage", weight: 1 }],
+  probes: [{ id: "ping", cost: 1, outcomes: { network: "timeout", storage: "ok" } }]
+});
+console.log(plan.expectedCostNumerator, plan.expectedCostDenominator, plan.policy);
+```
+
+Inputs have 1–12 hypotheses and 0–12 probes. Hypothesis weights and probe costs are positive integers up to 1,000,000. IDs and outcome labels are 1–64 UTF-16 code units. Every probe must specify an outcome for every hypothesis. The HTTP body/decoded model limit is 65,536 UTF-8 bytes; GET also has hosting URL limits, so use POST for larger models.
+
+The exact integer numerator/denominator fields are authoritative; decimal fields are approximate renderings. Equal-cost ties follow input order. Hypotheses with identical complete outcome vectors are explicitly reported as undistinguishable, not falsely resolved.
+
+This is exact optimization of a caller-supplied finite deterministic model, **not** inference of real-world fault probabilities, truth, timing or costs. It does not support noisy/stochastic outcomes. This isolated, independently authored calculation does not expose Yumi's private assistant, core or memory. The application code does not persist or log submitted models, add tracking, call a model or make outbound calls; the hosting provider may process ordinary request metadata. Submit only public, non-secret models. Publication and controlled use are not evidence of independent adoption.

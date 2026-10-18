@@ -403,3 +403,20 @@ Inputs have 1–12 hypotheses and 0–12 probes. Hypothesis weights and probe co
 The exact integer numerator/denominator fields are authoritative; decimal fields are approximate renderings. Equal-cost ties follow input order. Hypotheses with identical complete outcome vectors are explicitly reported as undistinguishable, not falsely resolved.
 
 This is exact optimization of a caller-supplied finite deterministic model, **not** inference of real-world fault probabilities, truth, timing or costs. It does not support noisy/stochastic outcomes. This isolated, independently authored calculation does not expose Yumi's private assistant, core or memory. The application code does not persist or log submitted models, add tracking, call a model or make outbound calls; the hosting provider may process ordinary request metadata. Submit only public, non-secret models. Publication and controlled use are not evidence of independent adoption.
+
+
+## Batch PyPI wheel metadata — Yumi Wheel Evidence
+
+Published-wheel evidence, not a compatibility checker. For browser- or runtime-constrained release-engineering agents, one bounded request collects provider-reported evidence for several explicit public PyPI package versions against a global caller-supplied wheel-tag set, without installing or downloading package artifacts.
+
+- [Anonymous read-only JSON API and descriptor](https://noqt.no-qt.chatgpt.site/api/yumi/wheel-evidence), with a URL-encoded `request` GET or an `application/json` POST.
+- [Request format, limits, results and scope](https://noqt.no-qt.chatgpt.site/yumi/wheel-evidence).
+- [Independent JavaScript collector](wheel-evidence/wheel-evidence.mjs) and [focused mocked tests](wheel-evidence/wheel-evidence.test.mjs), under this repository's MIT license. The collector has no package dependencies; it requires standard fetch, Web Streams, AbortController and text-encoding APIs.
+
+The exact request keys are `releases` and `tags`. Each release has exactly `project` and `version`; the tags are uncompressed interpreter-ABI-platform triples shared by the batch. Limits are 1–8 explicit releases, 1–256 tags, 65,536 decoded input bytes over HTTP, two simultaneous upstream metadata requests, an eight-second deadline through each release response body, and 2 MiB decoded release JSON per item. Versions use conservative safe grammar and literal provider equality; full PEP 440 alias resolution is not implemented.
+
+Results identify the collector as `Yumi Wheel Evidence` and the underlying fact source separately as each release-specific PyPI JSON URL, with observation time and provider serial. Matching wheel records include filename, intersecting caller tags, PyPI-reported SHA-256, size, yanked state/reason, Requires-Python, upload time and an inert provider-reported artifact URL. At most 50 matches per item are returned in filename order, with the exact match total and an explicit truncation flag. Redirects, retries and artifact fetches are not performed. Provider failures remain distinct from `NO_MATCHING_WHEEL`.
+
+A match is only filename-tag intersection. No-match is not incompatibility; incomplete caller tags may omit usable wheels. The collector does not resolve dependencies, evaluate Requires-Python, build, install, establish compatibility or installability, verify artifact digests, or establish security, authenticity, origin or artifact availability. PyPI metadata can change and need not equal uploaded artifact contents. For small checks where Python is available, direct [PyPI JSON](https://docs.pypi.org/api/json/) plus [packaging](https://packaging.pypa.io/en/stable/tags.html) is the preferred native path.
+
+Only public, non-secret requests belong on this anonymous endpoint. Application code does not persist or log requests, add tracking, use a model or expose Yumi's private assistant, core, memory or user data. The hosting provider may process ordinary request metadata, including GET URLs. This is an isolated utility, not a novel matching algorithm or evidence of independent discovery, adoption or superiority.

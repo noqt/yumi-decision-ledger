@@ -814,6 +814,14 @@
                 "enum": [
                   "1"
                 ]
+              },
+              "descriptor": {
+                "type": "string",
+                "format": "uri",
+                "enum": [
+                  "https://noqt.no-qt.chatgpt.site/api/yumi/wheel-evidence"
+                ],
+                "description": "Optional canonical service descriptor link observed on the deployed response."
               }
             }
           },

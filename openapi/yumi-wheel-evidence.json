@@ -1,0 +1,1107 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Yumi Wheel Evidence",
+    "version": "1",
+    "description": "Machine-readable description of the existing isolated Yumi Wheel Evidence HTTP surface. This specification describes the existing route only; it does not define a new service, model, relay, or persistence layer. The endpoint accepts public non-secret requests and reports provider-reported PyPI release metadata after filename-tag intersection. It does not assess compatibility, installability, security, origin, digest verification, or artifact availability.",
+    "license": {
+      "name": "CC0-1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  },
+  "externalDocs": {
+    "description": "Existing public Yumi Wheel Evidence documentation",
+    "url": "https://noqt.no-qt.chatgpt.site/yumi/wheel-evidence"
+  },
+  "servers": [
+    {
+      "url": "https://noqt.no-qt.chatgpt.site"
+    }
+  ],
+  "security": [],
+  "paths": {
+    "/api/yumi/wheel-evidence": {
+      "description": "The existing route supports GET, POST, and OPTIONS. HEAD, PUT, PATCH, and DELETE are unsupported and return 405 METHOD_NOT_ALLOWED with an Allow header; they are not advertised as usable capabilities.",
+      "get": {
+        "operationId": "getWheelEvidenceOrDescriptor",
+        "summary": "Return the service descriptor or collect wheel evidence",
+        "description": "With no query parameters, returns the service descriptor. Otherwise the query must contain exactly one request parameter and no other keys; its value is UTF-8 JSON subject to the 65,536-byte request limit. Duplicate request parameters are invalid.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "collectWheelEvidence",
+        "summary": "Collect wheel evidence for explicit PyPI releases and tags",
+        "description": "Accepts only application/json (including parameters such as charset). The body is streamed and capped at 65,536 bytes. If a client supplies Content-Length, the server validates it as an unsigned decimal integer no greater than 65,536; invalid or oversized values map to INVALID_CONTENT_LENGTH or PAYLOAD_TOO_LARGE. Up to two provider release requests are processed concurrently; provider errors remain per-item results.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WheelEvidenceRequest"
+              },
+              "examples": {
+                "request": {
+                  "value": {
+                    "releases": [
+                      {
+                        "project": "example-package",
+                        "version": "1.2.3"
+                      }
+                    ],
+                    "tags": [
+                      "cp312-cp312-win_amd64"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CollectSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "options": {
+        "operationId": "optionsWheelEvidence",
+        "summary": "Return CORS capabilities",
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/OptionsSuccess"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "RequestQuery": {
+        "name": "request",
+        "in": "query",
+        "required": false,
+        "description": "Exactly one URL-decoded JSON request value is accepted when query parameters are present. Omitting all query parameters returns the descriptor.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536
+        },
+        "example": "{\"releases\":[{\"project\":\"example-package\",\"version\":\"1.2.3\"}],\"tags\":[\"cp312-cp312-win_amd64\"]}"
+      }
+    },
+    "responses": {
+      "GetSuccess": {
+        "description": "Service descriptor when no query parameters are supplied, or collected wheel evidence for a valid request query.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/ServiceDescriptor"
+                },
+                {
+                  "$ref": "#/components/schemas/WheelEvidenceResponse"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "CollectSuccess": {
+        "description": "Collected wheel evidence, including explicit per-release provider results.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelEvidenceResponse"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "The request was invalid. Depending on the boundary, error is INVALID_QUERY, INVALID_JSON, INVALID_REQUEST, or INVALID_CONTENT_LENGTH.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "examples": {
+              "invalidQuery": {
+                "value": {
+                  "error": "INVALID_QUERY"
+                }
+              },
+              "invalidJson": {
+                "value": {
+                  "error": "INVALID_JSON"
+                }
+              },
+              "invalidRequest": {
+                "value": {
+                  "error": "INVALID_REQUEST"
+                }
+              },
+              "invalidContentLength": {
+                "value": {
+                  "error": "INVALID_CONTENT_LENGTH"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "The encoded query request or streamed JSON body exceeds 65,536 bytes.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": "PAYLOAD_TOO_LARGE"
+            }
+          }
+        }
+      },
+      "UnsupportedMediaType": {
+        "description": "The POST content type is not application/json.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": "UNSUPPORTED_MEDIA_TYPE"
+            }
+          }
+        }
+      },
+      "MethodNotAllowed": {
+        "description": "The HTTP method is not implemented for this existing route.",
+        "headers": {
+          "Allow": {
+            "$ref": "#/components/headers/Allow"
+          },
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": "METHOD_NOT_ALLOWED"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "An unexpected serialization or unclassified internal error occurred.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            },
+            "example": {
+              "error": "INTERNAL_ERROR"
+            }
+          }
+        }
+      },
+      "OptionsSuccess": {
+        "description": "CORS preflight response with no body.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        }
+      }
+    },
+    "headers": {
+      "CacheControl": {
+        "description": "The existing route disables caching.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "no-store"
+          ]
+        }
+      },
+      "NoSniff": {
+        "description": "The existing route prevents content-type sniffing.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "nosniff"
+          ]
+        }
+      },
+      "AllowOrigin": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "*"
+          ]
+        }
+      },
+      "AllowMethods": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "GET, POST, OPTIONS"
+          ]
+        }
+      },
+      "AllowHeaders": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Content-Type"
+          ]
+        }
+      },
+      "Allow": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "GET, POST, OPTIONS"
+          ]
+        }
+      }
+    },
+    "schemas": {
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "INVALID_QUERY",
+              "INVALID_JSON",
+              "INVALID_REQUEST",
+              "INVALID_CONTENT_LENGTH",
+              "PAYLOAD_TOO_LARGE",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "METHOD_NOT_ALLOWED",
+              "INTERNAL_ERROR"
+            ]
+          }
+        }
+      },
+      "WheelEvidenceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "releases",
+          "tags"
+        ],
+        "properties": {
+          "releases": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/ReleaseRequest"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+$"
+            },
+            "description": "Canonical lower-case uncompressed interpreter-ABI-platform triples; matching is literal intersection, without compatibility expansion."
+          }
+        },
+        "description": "The implementation requires exactly these two top-level keys. Duplicate normalized project/version pairs are rejected even though that cross-item constraint is not expressible in this schema."
+      },
+      "ReleaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "project",
+          "version"
+        ],
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9.!+_-]*$"
+          }
+        }
+      },
+      "ServiceDescriptor": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "brand",
+          "name",
+          "version",
+          "schema",
+          "endpoint",
+          "docs",
+          "methods",
+          "source",
+          "limits",
+          "requestSchema",
+          "output",
+          "assumptions",
+          "limitations"
+        ],
+        "properties": {
+          "brand": {
+            "type": "string",
+            "enum": [
+              "Yumi Wheel Evidence"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "Yumi Wheel Evidence"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "enum": [
+              "1"
+            ]
+          },
+          "schema": {
+            "type": "string",
+            "enum": [
+              "yumi.wheel-evidence.v1"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "format": "uri",
+            "enum": [
+              "https://noqt.no-qt.chatgpt.site/api/yumi/wheel-evidence"
+            ]
+          },
+          "docs": {
+            "type": "string",
+            "format": "uri",
+            "enum": [
+              "https://noqt.no-qt.chatgpt.site/yumi/wheel-evidence"
+            ]
+          },
+          "methods": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "string",
+              "enum": [
+                "GET",
+                "POST",
+                "OPTIONS"
+              ]
+            }
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "provider",
+              "data"
+            ],
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "PyPI"
+                ]
+              },
+              "data": {
+                "type": "string",
+                "enum": [
+                  "Release-specific PyPI JSON"
+                ]
+              }
+            }
+          },
+          "limits": {
+            "$ref": "#/components/schemas/ServiceLimits"
+          },
+          "requestSchema": {
+            "$ref": "#/components/schemas/DescriptorRequestSchema"
+          },
+          "output": {
+            "$ref": "#/components/schemas/DescriptorOutput"
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ServiceLimits": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requestBytes",
+          "releases",
+          "tags",
+          "projectLength",
+          "versionLength",
+          "tagLength",
+          "upstreamReleaseJsonBytes",
+          "upstreamRequestDeadlineMs",
+          "concurrentUpstreamRequests",
+          "providerUrlsPerItem",
+          "outputMatchesPerItem"
+        ],
+        "properties": {
+          "requestBytes": {
+            "type": "integer",
+            "enum": [
+              65536
+            ]
+          },
+          "releases": {
+            "$ref": "#/components/schemas/RangeLimit"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/RangeLimit"
+          },
+          "projectLength": {
+            "$ref": "#/components/schemas/RangeLimit"
+          },
+          "versionLength": {
+            "$ref": "#/components/schemas/RangeLimit"
+          },
+          "tagLength": {
+            "$ref": "#/components/schemas/RangeLimit"
+          },
+          "upstreamReleaseJsonBytes": {
+            "type": "integer",
+            "enum": [
+              2097152
+            ]
+          },
+          "upstreamRequestDeadlineMs": {
+            "type": "integer",
+            "enum": [
+              8000
+            ]
+          },
+          "concurrentUpstreamRequests": {
+            "type": "integer",
+            "enum": [
+              2
+            ]
+          },
+          "providerUrlsPerItem": {
+            "type": "integer",
+            "enum": [
+              1000
+            ]
+          },
+          "outputMatchesPerItem": {
+            "type": "integer",
+            "enum": [
+              50
+            ]
+          }
+        }
+      },
+      "RangeLimit": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "min",
+          "max"
+        ],
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        }
+      },
+      "DescriptorRequestSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "topLevelKeys",
+          "releaseKeys",
+          "tags",
+          "versionPattern"
+        ],
+        "properties": {
+          "topLevelKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "releases",
+              "tags"
+            ]
+          },
+          "releaseKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "project",
+              "version"
+            ]
+          },
+          "tags": {
+            "type": "string",
+            "enum": [
+              "Global canonical uncompressed wheel filename tags"
+            ]
+          },
+          "versionPattern": {
+            "type": "string",
+            "enum": [
+              "^[A-Za-z0-9][A-Za-z0-9.!+_-]*$"
+            ]
+          }
+        }
+      },
+      "DescriptorOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "matches",
+          "matchingTotal",
+          "truncated"
+        ],
+        "properties": {
+          "matches": {
+            "type": "string",
+            "enum": [
+              "Filename-selected matches ordered lexicographically by filename"
+            ]
+          },
+          "matchingTotal": {
+            "type": "string",
+            "enum": [
+              "Exact count before the output cap"
+            ]
+          },
+          "truncated": {
+            "type": "string",
+            "enum": [
+              "True when more matches exist than are returned"
+            ]
+          }
+        }
+      },
+      "WheelEvidenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema",
+          "producer",
+          "request",
+          "items",
+          "assumptions",
+          "limitations"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "yumi.wheel-evidence.v1"
+            ]
+          },
+          "producer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "version"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": [
+                  "Yumi Wheel Evidence"
+                ]
+              },
+              "version": {
+                "type": "string",
+                "enum": [
+                  "1"
+                ]
+              }
+            }
+          },
+          "request": {
+            "$ref": "#/components/schemas/WheelEvidenceRequest"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/WheelEvidenceItem"
+            },
+            "description": "Items preserve the submitted release order."
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "WheelEvidenceItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceSuccessItem"
+          },
+          {
+            "$ref": "#/components/schemas/WheelEvidenceFailureItem"
+          }
+        ]
+      },
+      "WheelEvidenceItemBase": {
+        "type": "object",
+        "required": [
+          "requested_project",
+          "normalized_project",
+          "requested_version",
+          "source_url",
+          "observed_at"
+        ],
+        "properties": {
+          "requested_project": {
+            "type": "string"
+          },
+          "normalized_project": {
+            "type": "string"
+          },
+          "requested_version": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://pypi\\.org/pypi/"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "WheelEvidenceSuccessItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceItemBase"
+          },
+          {
+            "type": "object",
+            "required": [
+              "resolved_project",
+              "resolved_version",
+              "last_serial",
+              "status",
+              "matching_total",
+              "truncated",
+              "matches"
+            ],
+            "properties": {
+              "resolved_project": {
+                "type": "string"
+              },
+              "resolved_version": {
+                "type": "string"
+              },
+              "last_serial": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "MATCHES",
+                  "NO_MATCHING_WHEEL"
+                ]
+              },
+              "matching_total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "truncated": {
+                "type": "boolean"
+              },
+              "matches": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "$ref": "#/components/schemas/WheelMatch"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WheelEvidenceFailureItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceItemBase"
+          },
+          {
+            "type": "object",
+            "required": [
+              "status",
+              "error_code",
+              "error"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEMA_ERROR",
+                  "TIMEOUT",
+                  "ABORT_ERROR",
+                  "NETWORK_ERROR",
+                  "UPSTREAM_HTTP",
+                  "REDIRECT",
+                  "HTTP_404",
+                  "HTTP_429",
+                  "UNSUPPORTED_BODY",
+                  "BODY_TOO_LARGE",
+                  "INVALID_UTF8",
+                  "INVALID_JSON",
+                  "UPSTREAM_IDENTITY_MISMATCH"
+                ]
+              },
+              "error_code": {
+                "type": "string",
+                "enum": [
+                  "SCHEMA_ERROR",
+                  "TIMEOUT",
+                  "ABORT_ERROR",
+                  "NETWORK_ERROR",
+                  "UPSTREAM_HTTP",
+                  "REDIRECT",
+                  "HTTP_404",
+                  "HTTP_429",
+                  "UNSUPPORTED_BODY",
+                  "BODY_TOO_LARGE",
+                  "INVALID_UTF8",
+                  "INVALID_JSON",
+                  "UPSTREAM_IDENTITY_MISMATCH"
+                ]
+              },
+              "error": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                }
+              },
+              "http_status": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 999
+              },
+              "retry_after": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 86400
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "enum": [
+                  8000
+                ]
+              },
+              "max_bytes": {
+                "type": "integer",
+                "enum": [
+                  2097152
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "WheelMatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "provider_url",
+          "reported_sha256",
+          "size",
+          "yanked",
+          "yanked_reason",
+          "requires_python",
+          "upload_time_iso_8601",
+          "matched_caller_tags"
+        ],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[\\x21-\\x7e]+$"
+          },
+          "provider_url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "pattern": "^https://files\\.pythonhosted\\.org/"
+          },
+          "reported_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "yanked": {
+            "type": "boolean"
+          },
+          "yanked_reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 256
+          },
+          "requires_python": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 256
+          },
+          "upload_time_iso_8601": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "matched_caller_tags": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+$"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-source-evidence": [
+    {
+      "url": "https://raw.githubusercontent.com/noqt/yumi-decision-ledger/6385f6b5ec6622db08f19881610d083f6227dc39/app/api/yumi/wheel-evidence/route.ts",
+      "scope": "Existing route handlers, service descriptor, limits, HTTP status/error mapping, and response headers",
+      "lines": "1-190"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/noqt/yumi-decision-ledger/6385f6b5ec6622db08f19881610d083f6227dc39/wheel-evidence/wheel-evidence.mjs",
+      "scope": "Existing request grammar, provider result/error shapes, limits, and output semantics",
+      "lines": "1-493"
+    }
+  ],
+  "x-license-scope": "CC0-1.0 applies only to this original definition at openapi/yumi-wheel-evidence.json and the copyright and related rights noqt holds in it. The repository MIT license and all existing source, runtime, private-core, memory and data materials remain unchanged; trademark, patent and third-party rights are not granted."
+}

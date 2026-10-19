@@ -6,8 +6,9 @@
   "entrypoint": "origin_receipt.py",
   "authorship": "NOQT-authored independent component",
   "receipt_formats": {
-    "writer": "origin-result-receipt/v2",
-    "reader_accepts": ["origin-result-receipt/v1", "origin-result-receipt/v2"],
+    "writer": "origin-result-receipt/v3",
+    "reader_accepts": ["origin-result-receipt/v1", "origin-result-receipt/v2", "origin-result-receipt/v3"],
+    "legacy_capture_completeness": "v1/v2 captures predate completeness fields; the reader reports legacy_unrecorded and never treats missing fields as complete.",
     "v1_only_reader_accepts_v2": false
   },
   "producer_metadata": {
@@ -36,7 +37,7 @@
       "exit_semantics": "Exit 0 means a receipt was written, even if the child failed or timed out. Invocation, preflight, or receipt-write errors exit 2; inspect the receipt for the child outcome.",
       "records": [
         "actual launch/completion status, child exit code or timeout",
-        "bounded stdout and stderr captures",
+        "bounded stdout and stderr captures with explicit capture_state, complete, and total_known facts",
         "caller-declared input identities before and after the command",
         "caller-declared artifact identities after the command"
       ]
@@ -61,6 +62,8 @@
     "local_sha256_is_signature_or_authentication": false,
     "environment_or_full_transcript_stored": false,
     "max_captured_bytes_each_stream": 65536,
+    "capture_deadline_seconds": 1.0,
+    "capture_deadline_behavior": "After direct completion or timeout, capture readers have one absolute deadline. A descendant-held inherited pipe can yield deadline/unknown-total without blocking receipt publication; no process-tree kill or containment is performed.",
     "stdout_stderr_encoding": "Retained bytes are decoded as UTF-8 with replacement; captures are not byte-exact for arbitrary output.",
     "max_input_or_artifact_bytes": 10485760,
     "max_receipt_bytes": 1048576,

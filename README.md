@@ -122,17 +122,25 @@ errors exit 2. `check` exits 0 for readable outcomes (`MATCH`, `MISMATCH`,
 tampered receipt exits 2. The receipt digest is local integrity checking, not
 a signature or authentication.
 
-New receipts use format `origin-result-receipt/v2` and include a bounded
+New receipts use format `origin-result-receipt/v3` and include a bounded
 `producer` object with `name`, `software_version`, `repository`, and
-`format_documentation` strings. The current self-reported values identify
+`format_documentation` strings. Each stdout/stderr capture also records
+`capture_state`, `complete`, `total_known`, and `cutoff_reason`. The runner
+retains at most 64 KiB per stream while continuing to drain and gives capture one absolute one-second
+deadline after the direct child completes or is timed out. If a descendant
+retains an inherited pipe, the receipt is still published with a
+`deadline`/unknown-total capture; the runner does not kill a process tree.
+The current self-reported values identify
 `origin-receipt` version `1.1.0`, its repository locator, and the relative
 descriptor name `origin-receipt.json`. These values are informational, not
 authenticated. The reader validates their shape and reports them as
 `self_reported`; locator strings remain data and are never fetched or executed.
 
-The reader continues to accept `origin-result-receipt/v1` receipts that do not
-contain producer metadata and reports that metadata as `not_recorded`. A reader
-that accepts only v1 does not accept newly written v2 receipts.
+The reader continues to accept `origin-result-receipt/v1` and `v2` receipts,
+including their legacy three-field capture objects. Because those versions did
+not record capture completeness, `check` reports `legacy_unrecorded` rather
+than assuming the missing fact means complete. A reader that accepts only v1 or
+v2 does not accept newly written v3 receipts.
 
 The origin component uses Python 3.12 or newer and the standard library. It was
 tested once on Windows with Python 3.12.5. This is not certification for every
@@ -360,7 +368,9 @@ python3.12 -B tests/test_origin_receipt.py -v
 ```
 
 On Windows, use `py -3.12` in place of `python3.12` for the origin-receipt
-test. The included tests are synthetic contract checks. See
+test. The origin-receipt tests include a bounded actual CLI regression for a
+direct child exit and timeout while a self-created helper retains inherited
+stdout/stderr, plus a finite-output path. See
 [`manifest.json`](manifest.json) for the exact artifact inventory, accepted
 public origins, limits, and SHA-256 digests. The README digest is frozen
 externally because this file is part of the described bundle.

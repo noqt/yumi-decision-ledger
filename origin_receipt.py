@@ -19,7 +19,8 @@ from typing import Any
 
 SCHEMA_V1 = "origin-result-receipt/v1"
 SCHEMA_V2 = "origin-result-receipt/v2"
-SCHEMA = SCHEMA_V2
+SCHEMA_V3 = "origin-result-receipt/v3"
+SCHEMA = SCHEMA_V3
 SOFTWARE_VERSION = "1.1.0"
 PRODUCER_FIELDS = {
     "name": 64,
@@ -41,7 +42,11 @@ MAX_PATH_CHARS = 1024
 MAX_ARG_CHARS = 4096
 MAX_TOTAL_ARG_CHARS = 64 * 1024
 MAX_TIMEOUT_SECONDS = 180
+CAPTURE_DEADLINE_SECONDS = 1.0
+CAPTURE_CHUNK_BYTES = 8192
 HEX_256 = re.compile(r"^[0-9a-f]{64}$")
+CAPTURE_STATES = {"complete", "truncated", "deadline", "reader_error", "not_started"}
+CAPTURE_CUTOFFS = {None, "byte_cap", "deadline", "reader_error", "not_started"}
 
 
 class ReceiptError(ValueError):
@@ -205,33 +210,128 @@ def _identity_map(root: Path, paths: list[str]) -> dict[str, dict[str, Any]]:
     return {path: _file_identity(root, path) for path in paths}
 
 
-def _read_capped(pipe: Any, output: dict[str, Any], name: str) -> None:
-    kept = bytearray()
-    total = 0
-    while True:
-        chunk = pipe.read(8192)
-        if not chunk:
-            break
-        total += len(chunk)
-        room = MAX_CAPTURE_BYTES - len(kept)
-        if room > 0:
-            kept.extend(chunk[:room])
-    output[name] = {
-        "text": bytes(kept).decode("utf-8", errors="replace"),
-        "bytes_total": total,
-        "truncated": total > len(kept),
+def _empty_capture() -> dict[str, Any]:
+    return {
+        "text": "",
+        "bytes_total": 0,
+        "truncated": False,
+        "complete": False,
+        "total_known": False,
+        "capture_state": "not_started",
+        "cutoff_reason": "not_started",
     }
 
 
-def _capture_streams(proc: subprocess.Popen[bytes]) -> tuple[dict[str, Any], list[threading.Thread]]:
-    result: dict[str, Any] = {}
+def _read_capped(pipe: Any, state: dict[str, Any]) -> None:
+    """Drain a bounded amount while retaining no more than MAX_CAPTURE_BYTES.
+
+    The worker is deliberately daemonized and is the sole owner of closing its
+    pipe.  A descendant-held handle may keep this read blocked, but it cannot
+    keep receipt publication or process return blocked.
+    """
+    try:
+        while True:
+            chunk = pipe.read(CAPTURE_CHUNK_BYTES)
+            if not chunk:
+                with state["lock"]:
+                    if not state["finalized"]:
+                        state["eof"] = True
+                return
+            with state["lock"]:
+                if state["finalized"]:
+                    return
+                state["total"] += len(chunk)
+                room = MAX_CAPTURE_BYTES - len(state["kept"])
+                if room > 0:
+                    state["kept"].extend(chunk[:room])
+    except (OSError, ValueError):
+        with state["lock"]:
+            if not state["finalized"]:
+                state["reader_error"] = True
+    finally:
+        # Closing a live BufferedReader from the finalizer would contend with
+        # its own blocked read.  Only this reader closes its pipe, after read()
+        # has returned or raised; the capture owner never closes a live pipe.
+        try:
+            pipe.close()
+        except (OSError, ValueError):
+            pass
+
+
+def _capture_streams(
+    proc: subprocess.Popen[bytes],
+) -> tuple[dict[str, dict[str, Any]], list[threading.Thread]]:
+    states: dict[str, dict[str, Any]] = {}
     workers: list[threading.Thread] = []
     assert proc.stdout is not None and proc.stderr is not None
     for name, pipe in (("stdout", proc.stdout), ("stderr", proc.stderr)):
-        worker = threading.Thread(target=_read_capped, args=(pipe, result, name), daemon=False)
+        state: dict[str, Any] = {
+            "pipe": pipe,
+            "kept": bytearray(),
+            "total": 0,
+            "eof": False,
+            "reader_error": False,
+            "finalized": False,
+            "lock": threading.Lock(),
+        }
+        worker = threading.Thread(target=_read_capped, args=(pipe, state), daemon=True)
         worker.start()
+        states[name] = state
         workers.append(worker)
-    return result, workers
+    return states, workers
+
+
+def _finish_capture(
+    states: dict[str, dict[str, Any]], workers: list[threading.Thread], deadline: float
+) -> dict[str, dict[str, Any]]:
+    """Finalize stream snapshots without an unbounded join or pipe close."""
+    for worker in workers:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        worker.join(timeout=remaining)
+
+    blocked_names = {
+        name
+        for name, worker in zip(states, workers, strict=False)
+        if worker.is_alive()
+    }
+    result: dict[str, dict[str, Any]] = {}
+    for name, state in states.items():
+        with state["lock"]:
+            eof = bool(state["eof"])
+            reader_error = bool(state["reader_error"])
+            total = int(state["total"])
+            kept = bytes(state["kept"])
+            state["finalized"] = True
+        if name in blocked_names:
+            truncated = total > MAX_CAPTURE_BYTES
+            capture_state = "deadline"
+            cutoff_reason = "deadline"
+            complete = False
+            total_known = False
+        elif eof:
+            truncated = total > MAX_CAPTURE_BYTES
+            capture_state = "truncated" if truncated else "complete"
+            cutoff_reason = "byte_cap" if truncated else None
+            complete = not truncated
+            total_known = True
+        else:
+            truncated = total > MAX_CAPTURE_BYTES
+            capture_state = "reader_error" if reader_error else "deadline"
+            cutoff_reason = "reader_error" if reader_error else "deadline"
+            complete = False
+            total_known = False
+        result[name] = {
+            "text": kept.decode("utf-8", errors="replace"),
+            "bytes_total": total,
+            "truncated": truncated,
+            "complete": complete,
+            "total_known": total_known,
+            "capture_state": capture_state,
+            "cutoff_reason": cutoff_reason,
+        }
+    return result
 
 
 def _safe_argv(argv: list[str]) -> list[str]:
@@ -299,11 +399,9 @@ def run_command(
     exit_code: int | None = None
     launch_error: dict[str, str] | None = None
     timed_out = False
-    streams = {
-        "stdout": {"text": "", "bytes_total": 0, "truncated": False},
-        "stderr": {"text": "", "bytes_total": 0, "truncated": False},
-    }
+    streams = {"stdout": _empty_capture(), "stderr": _empty_capture()}
     proc: subprocess.Popen[bytes] | None = None
+    capture_states: dict[str, dict[str, Any]] = {}
     workers: list[threading.Thread] = []
     try:
         creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -317,7 +415,7 @@ def run_command(
             close_fds=True,
             creationflags=creationflags,
         )
-        streams, workers = _capture_streams(proc)
+        capture_states, workers = _capture_streams(proc)
         try:
             exit_code = proc.wait(timeout=float(timeout_seconds))
         except subprocess.TimeoutExpired:
@@ -325,22 +423,24 @@ def run_command(
             status = "timed_out"
             proc.kill()
             exit_code = proc.wait()
-        for worker in workers:
-            worker.join()
     except OSError as exc:
         status = "launch_error"
         launch_error = {"type": type(exc).__name__, "message": str(exc)[:2048]}
     finally:
-        if proc is not None and proc.poll() is None:
-            proc.kill()
-            exit_code = proc.wait()
-        for worker in workers:
-            if worker.is_alive():
-                worker.join(timeout=5)
         if proc is not None:
-            for pipe in (proc.stdout, proc.stderr):
-                if pipe is not None:
-                    pipe.close()
+            try:
+                if proc.poll() is None:
+                    proc.kill()
+                    exit_code = proc.wait()
+            except OSError:
+                # Preserve the already observed direct outcome; capture remains bounded.
+                pass
+        if capture_states:
+            streams = _finish_capture(
+                capture_states,
+                workers,
+                time.monotonic() + CAPTURE_DEADLINE_SECONDS,
+            )
 
     finished_at = _utc_now()
     after_inputs = _identity_map(root, input_paths)
@@ -399,7 +499,7 @@ def _check_body_shape(body: Any) -> None:
     schema = body.get("schema")
     if schema == SCHEMA_V1:
         required = required_v1
-    elif schema == SCHEMA_V2:
+    elif schema in {SCHEMA_V2, SCHEMA_V3}:
         required = required_v1 | {"producer"}
         _check_producer_metadata(body.get("producer"))
     else:
@@ -445,7 +545,12 @@ def _check_body_shape(body: Any) -> None:
         raise ReceiptError("receipt elapsed time is malformed")
     for name in ("stdout", "stderr"):
         capture = execution[name]
-        if not isinstance(capture, dict) or set(capture) != {"text", "bytes_total", "truncated"}:
+        legacy_fields = {"text", "bytes_total", "truncated"}
+        v3_fields = legacy_fields | {
+            "complete", "total_known", "capture_state", "cutoff_reason"
+        }
+        expected_fields = v3_fields if schema == SCHEMA_V3 else legacy_fields
+        if not isinstance(capture, dict) or set(capture) != expected_fields:
             raise ReceiptError(f"receipt {name} capture is malformed")
         if (
             not isinstance(capture["text"], str)
@@ -455,6 +560,33 @@ def _check_body_shape(body: Any) -> None:
             or not isinstance(capture["truncated"], bool)
         ):
             raise ReceiptError(f"receipt {name} capture is malformed")
+        if schema == SCHEMA_V3:
+            state = capture["capture_state"]
+            cutoff = capture["cutoff_reason"]
+            if (
+                state not in CAPTURE_STATES
+                or cutoff not in CAPTURE_CUTOFFS
+                or not isinstance(capture["complete"], bool)
+                or not isinstance(capture["total_known"], bool)
+            ):
+                raise ReceiptError(f"receipt {name} capture completeness is malformed")
+            expected_complete = state == "complete"
+            expected_total_known = state in {"complete", "truncated"}
+            expected_cutoff = {
+                "complete": None,
+                "truncated": "byte_cap",
+                "deadline": "deadline",
+                "reader_error": "reader_error",
+                "not_started": "not_started",
+            }[state]
+            if (
+                capture["complete"] != expected_complete
+                or capture["total_known"] != expected_total_known
+                or cutoff != expected_cutoff
+                or (state == "complete" and capture["truncated"])
+                or (state == "truncated" and not capture["truncated"])
+            ):
+                raise ReceiptError(f"receipt {name} capture completeness is inconsistent")
     if execution["status"] == "launch_error":
         err = execution["launch_error"]
         if not isinstance(err, dict) or set(err) != {"type", "message"}:
@@ -588,6 +720,23 @@ def check_receipt(
     else:
         scope_state = "MATCH"
 
+    capture_completeness: dict[str, dict[str, Any]] = {}
+    for name in ("stdout", "stderr"):
+        capture = body["execution"][name]
+        if "capture_state" in capture:
+            capture_completeness[name] = {
+                "state": capture["capture_state"],
+                "complete": capture["complete"],
+                "total_known": capture["total_known"],
+            }
+        else:
+            # Legacy v1/v2 receipts never recorded whether inherited writers remained.
+            capture_completeness[name] = {
+                "state": "legacy_unrecorded",
+                "complete": False,
+                "total_known": False,
+            }
+
     return {
         "receipt": receipt_rel,
         "run_id": body["run_id"],
@@ -598,6 +747,7 @@ def check_receipt(
         "execution_status": body["execution"]["status"],
         "recorded_exit_code": body["execution"]["exit_code"],
         "recorded_timed_out": body["execution"]["timed_out"],
+        "capture_completeness": capture_completeness,
         "scope_state": scope_state,
         "declared_scope_state": declared_scope_state,
         "differences": differences,

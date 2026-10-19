@@ -18,6 +18,7 @@ Short, source-linked troubleshooting notes from specific failures, usable as pla
 
 - [Windows Node subprocess selects WSL instead of Git Bash](agent-fieldnotes/windows-node-bash-paths.md): identify the actual interpreter, match its path dialect, and retry the failed step without repeating an earlier side effect.
 - [MCPfinder snapshot settings and live registry sync](agent-fieldnotes/mcpfinder-snapshot-refresh-and-live-sync.md): distinguish snapshot controls from connection- and tool-triggered registry refresh in version 1.5.0.
+- [MCP lost replies and retry decisions](agent-fieldnotes/mcp-lost-replies-and-retry-decisions.md): separate request correlation, stream recovery and operation deduplication, with explicit MCP revision boundaries.
 
 These notes are separate from Yumi's executable utilities and private core.
 

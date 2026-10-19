@@ -1,0 +1,1863 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Yumi Public Utilities",
+    "version": "1",
+    "description": "Standalone combined client view of three existing anonymous POST computations at the public Yumi site: wheel evidence, network-set evidence, and probe planning. This document describes exactly those three POST operations and does not create a new service, model, relay, persistence layer, or authentication boundary. Callers should submit public, non-secret inputs. The application routes do not require an account or authentication; the hosting provider may process ordinary request metadata. The existing runtime also keeps its descriptor GET, URL-encoded computation GET, and OPTIONS interfaces on these routes; those interfaces remain available but are deliberately outside this combined three-computation client view.",
+    "license": {
+      "name": "MIT",
+      "url": "https://raw.githubusercontent.com/noqt/yumi-decision-ledger/ff75f64053a03a2b07ca86ff46af7f2d51d719b2/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://noqt.no-qt.chatgpt.site"
+    }
+  ],
+  "security": [],
+  "x-interface-scope": {
+    "included": [
+      "POST /api/yumi/wheel-evidence",
+      "POST /api/yumi/network-set-evidence",
+      "POST /api/yumi/probe-plan"
+    ],
+    "excludedButStillAvailable": [
+      "Descriptor GET on each existing route",
+      "URL-encoded computation GET on each existing route",
+      "OPTIONS on each existing route"
+    ],
+    "note": "The excluded descriptor, encoded-GET, and OPTIONS interfaces remain part of the existing public runtime. Their omission here is a client-view scope choice, not a removal or replacement of those methods."
+  },
+  "paths": {
+    "/api/yumi/wheel-evidence": {
+      "post": {
+        "operationId": "collectWheelEvidence",
+        "summary": "Collect wheel evidence for explicit PyPI releases and tags",
+        "description": "Existing anonymous POST computation. Accepts only application/json, including parameters such as charset. The streamed UTF-8 request body and any supplied Content-Length are capped at 65,536 bytes. The body must be a JSON object with exactly the releases and tags keys; request and item constraints are described by WheelEvidenceRequest. Up to two provider release requests are processed concurrently. Provider-reported results and provider failures remain explicit per release. The route does not download wheel files, retry requests, follow redirects, call a model, persist or log requests, or assess compatibility, installability, security, origin, digest verification, or artifact availability.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WheelEvidenceRequest"
+              },
+              "examples": {
+                "request": {
+                  "value": {
+                    "releases": [
+                      {
+                        "project": "example-package",
+                        "version": "1.2.3"
+                      }
+                    ],
+                    "tags": [
+                      "cp312-cp312-win_amd64"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/WheelCollectSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/WheelBadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/WheelPayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/WheelUnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/WheelInternalError"
+          }
+        }
+      }
+    },
+    "/api/yumi/network-set-evidence": {
+      "post": {
+        "operationId": "analyzeNetworkSets",
+        "summary": "Compare exact IPv4 and IPv6 address sets",
+        "description": "Existing anonymous POST computation. Accepts only application/json, including parameters such as charset. The streamed UTF-8 request body and serialized input are capped at 16,384 bytes; each before and after array contains at most 64 CIDR strings, each at most 60 UTF-16 code units. The parsed object has exactly before and after keys. Input CIDRs are strict canonical-formatted address blocks with zero host bits; the exact grammar and refusal cases are described by NetworkCidr. The complete response, including producer metadata, is capped at 512 output CIDRs and 65,536 UTF-8 bytes; a limit failure rejects the whole result rather than truncating it. The route does not fetch externally, call a model, authenticate, persist or log requests, or assess reachability, routing, firewall, security policy, configuration, host usability, or access decisions.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkSetRequest"
+              },
+              "examples": {
+                "request": {
+                  "value": {
+                    "before": [
+                      "10.0.0.0/25"
+                    ],
+                    "after": [
+                      "10.0.0.0/24"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/NetworkSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/NetworkBadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/NetworkLimit"
+          },
+          "415": {
+            "$ref": "#/components/responses/NetworkUnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/NetworkInternalError"
+          }
+        }
+      }
+    },
+    "/api/yumi/probe-plan": {
+      "post": {
+        "operationId": "planDiagnostic",
+        "summary": "Plan minimum expected cost over a finite diagnostic model",
+        "description": "Existing anonymous POST computation. Accepts only application/json, including parameters such as charset. The streamed UTF-8 request body and serialized model are capped at 65,536 bytes. The model has exactly hypotheses and probes keys; exact entry keys, array bounds, unique IDs, positive integer ranges, and complete outcomes mappings are described by ProbePlannerRequest. Text limits are runtime UTF-16 code-unit limits, which OpenAPI maxLength is not used to impersonate. The response reports exact safe-integer expected-cost ratios alongside decimal approximations and a recursively materialized policy. The route does not infer real-world truth, timing, probabilities, or costs; it does not call an external model, make outbound calls, persist or log models, or expose Yumi's private assistant, core, or memory.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProbePlannerRequest"
+              },
+              "examples": {
+                "request": {
+                  "value": {
+                    "hypotheses": [
+                      {
+                        "id": "network",
+                        "weight": 2
+                      },
+                      {
+                        "id": "storage",
+                        "weight": 1
+                      }
+                    ],
+                    "probes": [
+                      {
+                        "id": "ping",
+                        "cost": 1,
+                        "outcomes": {
+                          "network": "timeout",
+                          "storage": "ok"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ProbeSuccess"
+          },
+          "400": {
+            "$ref": "#/components/responses/ProbeBadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/ProbePayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/ProbeUnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/ProbeInternalError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "headers": {
+      "CacheControl": {
+        "description": "The existing routes disable caching.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "no-store"
+          ]
+        }
+      },
+      "NoSniff": {
+        "description": "The existing routes prevent content-type sniffing.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "nosniff"
+          ]
+        }
+      },
+      "AllowOrigin": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "*"
+          ]
+        }
+      },
+      "AllowMethods": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "GET, POST, OPTIONS"
+          ]
+        }
+      },
+      "AllowHeaders": {
+        "schema": {
+          "type": "string",
+          "enum": [
+            "Content-Type"
+          ]
+        }
+      }
+    },
+    "responses": {
+      "WheelCollectSuccess": {
+        "description": "Collected wheel evidence, including explicit per-release provider results.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelEvidenceResponse"
+            }
+          }
+        }
+      },
+      "WheelBadRequest": {
+        "description": "The POST request was invalid. The runtime returns INVALID_JSON for malformed JSON or invalid UTF-8, INVALID_REQUEST for a parsed request rejected by the wheel collector, or INVALID_CONTENT_LENGTH for an invalid Content-Length.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelErrorEnvelope"
+            },
+            "examples": {
+              "invalidJson": {
+                "value": {
+                  "error": "INVALID_JSON"
+                }
+              },
+              "invalidRequest": {
+                "value": {
+                  "error": "INVALID_REQUEST"
+                }
+              },
+              "invalidContentLength": {
+                "value": {
+                  "error": "INVALID_CONTENT_LENGTH"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WheelPayloadTooLarge": {
+        "description": "The streamed POST body or its supplied Content-Length exceeds 65,536 bytes.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelErrorEnvelope"
+            },
+            "example": {
+              "error": "PAYLOAD_TOO_LARGE"
+            }
+          }
+        }
+      },
+      "WheelUnsupportedMediaType": {
+        "description": "The POST Content-Type is absent or is not application/json.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelErrorEnvelope"
+            },
+            "example": {
+              "error": "UNSUPPORTED_MEDIA_TYPE"
+            }
+          }
+        }
+      },
+      "WheelInternalError": {
+        "description": "An unexpected serialization or unclassified internal error occurred.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WheelErrorEnvelope"
+            },
+            "example": {
+              "error": "INTERNAL_ERROR"
+            }
+          }
+        }
+      },
+      "NetworkSuccess": {
+        "description": "Exact network-set comparison result with producer descriptor metadata.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NetworkSetResponse"
+            }
+          }
+        }
+      },
+      "NetworkBadRequest": {
+        "description": "The network-set POST request is invalid. The structured code and message identify invalid JSON/request shape or an invalid CIDR.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NetworkErrorEnvelope"
+            },
+            "examples": {
+              "invalidRequest": {
+                "value": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "The request is invalid."
+                  }
+                }
+              },
+              "invalidCidr": {
+                "value": {
+                  "error": {
+                    "code": "INVALID_CIDR",
+                    "message": "A CIDR entry is invalid."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NetworkLimit": {
+        "description": "The serialized input exceeds 16,384 bytes, an input array exceeds 64 entries, the complete result exceeds 512 output CIDRs, or the complete result exceeds 65,536 UTF-8 bytes. The runtime never truncates a limited result.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NetworkErrorEnvelope"
+            },
+            "examples": {
+              "inputLimit": {
+                "value": {
+                  "error": {
+                    "code": "INPUT_LIMIT",
+                    "message": "The request exceeds an input limit."
+                  }
+                }
+              },
+              "outputLimit": {
+                "value": {
+                  "error": {
+                    "code": "OUTPUT_LIMIT",
+                    "message": "The complete result exceeds an output limit."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NetworkUnsupportedMediaType": {
+        "description": "The POST Content-Type is absent or is not application/json. This existing route uses the INVALID_REQUEST structured error for this status.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NetworkErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "INVALID_REQUEST",
+                "message": "The request is invalid."
+              }
+            }
+          }
+        }
+      },
+      "NetworkInternalError": {
+        "description": "An unclassified internal or serialization error occurred.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/NetworkErrorEnvelope"
+            },
+            "example": {
+              "error": {
+                "code": "INTERNAL_ERROR",
+                "message": "The result could not be produced."
+              }
+            }
+          }
+        }
+      },
+      "ProbeSuccess": {
+        "description": "Exact finite-model expected-cost result and its materialized policy.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProbePlannerResponse"
+            }
+          }
+        }
+      },
+      "ProbeBadRequest": {
+        "description": "The probe-plan POST request contains malformed JSON or a model rejected by the exact-key, type, length, uniqueness, completeness, or bounded-integer checks.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProbeErrorEnvelope"
+            },
+            "examples": {
+              "invalidJson": {
+                "value": {
+                  "error": "INVALID_JSON"
+                }
+              },
+              "invalidModel": {
+                "value": {
+                  "error": "INVALID_MODEL"
+                }
+              },
+              "invalidContentLength": {
+                "value": {
+                  "error": "INVALID_CONTENT_LENGTH"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProbePayloadTooLarge": {
+        "description": "The streamed POST body, its supplied Content-Length, or the decoded model exceeds 65,536 UTF-8 bytes.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProbeErrorEnvelope"
+            },
+            "example": {
+              "error": "PAYLOAD_TOO_LARGE"
+            }
+          }
+        }
+      },
+      "ProbeUnsupportedMediaType": {
+        "description": "The POST Content-Type is absent or is not application/json.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProbeErrorEnvelope"
+            },
+            "example": {
+              "error": "UNSUPPORTED_MEDIA_TYPE"
+            }
+          }
+        }
+      },
+      "ProbeInternalError": {
+        "description": "An unexpected serialization, arithmetic, or unclassified internal error occurred.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "X-Content-Type-Options": {
+            "$ref": "#/components/headers/NoSniff"
+          },
+          "Access-Control-Allow-Origin": {
+            "$ref": "#/components/headers/AllowOrigin"
+          },
+          "Access-Control-Allow-Methods": {
+            "$ref": "#/components/headers/AllowMethods"
+          },
+          "Access-Control-Allow-Headers": {
+            "$ref": "#/components/headers/AllowHeaders"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProbeErrorEnvelope"
+            },
+            "example": {
+              "error": "INTERNAL_ERROR"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "WheelErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "INVALID_QUERY",
+              "INVALID_JSON",
+              "INVALID_REQUEST",
+              "INVALID_CONTENT_LENGTH",
+              "PAYLOAD_TOO_LARGE",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "METHOD_NOT_ALLOWED",
+              "INTERNAL_ERROR"
+            ]
+          }
+        }
+      },
+      "WheelEvidenceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "releases",
+          "tags"
+        ],
+        "properties": {
+          "releases": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/ReleaseRequest"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+$"
+            },
+            "description": "Canonical lower-case uncompressed interpreter-ABI-platform triples; matching is literal intersection without compatibility expansion."
+          }
+        },
+        "description": "The implementation requires exactly these two top-level keys. Duplicate normalized project/version pairs are rejected even though that cross-item constraint is not expressible in this schema.",
+        "x-runtime-request-utf8-bytes": 65536,
+        "x-runtime-limits": {
+          "projectLength": {
+            "min": 1,
+            "max": 128
+          },
+          "versionLength": {
+            "min": 1,
+            "max": 64
+          },
+          "tagLength": {
+            "min": 1,
+            "max": 128
+          }
+        }
+      },
+      "ReleaseRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "project",
+          "version"
+        ],
+        "properties": {
+          "project": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$"
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9.!+_-]*$"
+          }
+        }
+      },
+      "WheelEvidenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema",
+          "producer",
+          "request",
+          "items",
+          "assumptions",
+          "limitations"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "yumi.wheel-evidence.v1"
+            ]
+          },
+          "producer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "version"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": [
+                  "Yumi Wheel Evidence"
+                ]
+              },
+              "version": {
+                "type": "string",
+                "enum": [
+                  "1"
+                ]
+              },
+              "descriptor": {
+                "type": "string",
+                "format": "uri",
+                "enum": [
+                  "https://noqt.no-qt.chatgpt.site/api/yumi/wheel-evidence"
+                ],
+                "description": "Optional canonical service descriptor link observed on the deployed response."
+              }
+            }
+          },
+          "request": {
+            "$ref": "#/components/schemas/WheelEvidenceRequest"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "items": {
+              "$ref": "#/components/schemas/WheelEvidenceItem"
+            },
+            "description": "Items preserve submitted release order."
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "x-runtime-output-limits": {
+          "matchesPerItem": 50,
+          "providerUrlsPerItem": 1000,
+          "upstreamReleaseJsonBytes": 2097152,
+          "upstreamRequestDeadlineMs": 8000,
+          "concurrentUpstreamRequests": 2
+        }
+      },
+      "WheelEvidenceItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceSuccessItem"
+          },
+          {
+            "$ref": "#/components/schemas/WheelEvidenceFailureItem"
+          }
+        ]
+      },
+      "WheelEvidenceItemBase": {
+        "type": "object",
+        "required": [
+          "requested_project",
+          "normalized_project",
+          "requested_version",
+          "source_url",
+          "observed_at"
+        ],
+        "properties": {
+          "requested_project": {
+            "type": "string"
+          },
+          "normalized_project": {
+            "type": "string"
+          },
+          "requested_version": {
+            "type": "string"
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://pypi\\.org/pypi/"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "WheelEvidenceSuccessItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceItemBase"
+          },
+          {
+            "type": "object",
+            "required": [
+              "resolved_project",
+              "resolved_version",
+              "last_serial",
+              "status",
+              "matching_total",
+              "truncated",
+              "matches"
+            ],
+            "properties": {
+              "resolved_project": {
+                "type": "string"
+              },
+              "resolved_version": {
+                "type": "string"
+              },
+              "last_serial": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "MATCHES",
+                  "NO_MATCHING_WHEEL"
+                ]
+              },
+              "matching_total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "truncated": {
+                "type": "boolean"
+              },
+              "matches": {
+                "type": "array",
+                "maxItems": 50,
+                "items": {
+                  "$ref": "#/components/schemas/WheelMatch"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WheelEvidenceFailureItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WheelEvidenceItemBase"
+          },
+          {
+            "type": "object",
+            "required": [
+              "status",
+              "error_code",
+              "error"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEMA_ERROR",
+                  "TIMEOUT",
+                  "ABORT_ERROR",
+                  "NETWORK_ERROR",
+                  "UPSTREAM_HTTP",
+                  "REDIRECT",
+                  "HTTP_404",
+                  "HTTP_429",
+                  "UNSUPPORTED_BODY",
+                  "BODY_TOO_LARGE",
+                  "INVALID_UTF8",
+                  "INVALID_JSON",
+                  "UPSTREAM_IDENTITY_MISMATCH"
+                ]
+              },
+              "error_code": {
+                "type": "string",
+                "enum": [
+                  "SCHEMA_ERROR",
+                  "TIMEOUT",
+                  "ABORT_ERROR",
+                  "NETWORK_ERROR",
+                  "UPSTREAM_HTTP",
+                  "REDIRECT",
+                  "HTTP_404",
+                  "HTTP_429",
+                  "UNSUPPORTED_BODY",
+                  "BODY_TOO_LARGE",
+                  "INVALID_UTF8",
+                  "INVALID_JSON",
+                  "UPSTREAM_IDENTITY_MISMATCH"
+                ]
+              },
+              "error": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  }
+                }
+              },
+              "http_status": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 999
+              },
+              "retry_after": {
+                "type": "integer",
+                "nullable": true,
+                "minimum": 0,
+                "maximum": 86400
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "enum": [
+                  8000
+                ]
+              },
+              "max_bytes": {
+                "type": "integer",
+                "enum": [
+                  2097152
+                ]
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "WheelMatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "filename",
+          "provider_url",
+          "reported_sha256",
+          "size",
+          "yanked",
+          "yanked_reason",
+          "requires_python",
+          "upload_time_iso_8601",
+          "matched_caller_tags"
+        ],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[\\x21-\\x7e]+$"
+          },
+          "provider_url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "pattern": "^https://files\\.pythonhosted\\.org/"
+          },
+          "reported_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "yanked": {
+            "type": "boolean"
+          },
+          "yanked_reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 256
+          },
+          "requires_python": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 256
+          },
+          "upload_time_iso_8601": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "matched_caller_tags": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9_]+-[a-z0-9_]+-[a-z0-9_]+$"
+            }
+          }
+        }
+      },
+      "NetworkErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/NetworkError"
+          }
+        }
+      },
+      "NetworkError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_REQUEST",
+              "INVALID_CIDR",
+              "INPUT_LIMIT",
+              "OUTPUT_LIMIT",
+              "METHOD_NOT_ALLOWED",
+              "INTERNAL_ERROR"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "enum": [
+              "The request is invalid.",
+              "A CIDR entry is invalid.",
+              "The request exceeds an input limit.",
+              "The complete result exceeds an output limit.",
+              "This HTTP method is not supported.",
+              "The result could not be produced."
+            ]
+          }
+        },
+        "description": "The runtime emits the message paired with the code in ERROR_MESSAGES; the code/message relationship is fixed even though OpenAPI 3.0.3 cannot express that cross-property pairing in one enum schema."
+      },
+      "NetworkSetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "before",
+          "after"
+        ],
+        "properties": {
+          "before": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/components/schemas/NetworkCidr"
+            }
+          },
+          "after": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/components/schemas/NetworkCidr"
+            }
+          }
+        },
+        "description": "Exactly two top-level keys are required. Empty arrays are valid. Unknown keys, non-array values, non-string entries, duplicate query parameters, malformed JSON, and unsupported forms are refused by the HTTP boundary.",
+        "x-runtime-serialized-input-utf8-bytes": 16384,
+        "x-runtime-array-items-per-side": 64
+      },
+      "NetworkCidr": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60,
+        "description": "Runtime grammar: strict IPv4 has exactly four decimal octets without leading zeroes, each 0..255; strict IPv6 has hexadecimal hextets and at most one case-insensitive :: compression marker expanding to eight hextets; prefixes use canonical decimal notation and stay within the family; host bits must be zero. Zones, dotted or IPv4-mapped IPv6, hostnames, URLs, and other forms are refused. The runtime also counts this bound in UTF-16 code units; valid accepted forms are ASCII, so this portable character bound does not replace the grammar.",
+        "x-runtime-max-utf16-code-units": 60
+      },
+      "NetworkSetResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema",
+          "producer",
+          "equivalent",
+          "normalized",
+          "added",
+          "removed",
+          "assumptions",
+          "limitations"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "yumi.network-set-evidence.v1"
+            ]
+          },
+          "producer": {
+            "$ref": "#/components/schemas/NetworkProducer"
+          },
+          "equivalent": {
+            "type": "boolean",
+            "description": "True exactly when all four family-specific added and removed address_count values are the decimal string 0."
+          },
+          "normalized": {
+            "$ref": "#/components/schemas/NetworkNormalized"
+          },
+          "added": {
+            "$ref": "#/components/schemas/NetworkChangeSet"
+          },
+          "removed": {
+            "$ref": "#/components/schemas/NetworkChangeSet"
+          },
+          "assumptions": {
+            "$ref": "#/components/schemas/NetworkAssumptions"
+          },
+          "limitations": {
+            "$ref": "#/components/schemas/NetworkLimitations"
+          }
+        },
+        "description": "Normalized contains minimal canonical CIDR decompositions. added is after minus before; removed is before minus after. IPv4 and IPv6 remain separate. Counts include every address, including network and broadcast addresses. The complete serialized UTF-8 response, including the producer descriptor, is at most 65,536 bytes and contains at most 512 CIDRs across all eight output lists.",
+        "x-runtime-output-utf8-bytes": 65536,
+        "x-runtime-total-output-cidrs": 512
+      },
+      "NetworkProducer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "version",
+          "descriptor"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "Yumi Network Set Evidence"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "enum": [
+              "1"
+            ]
+          },
+          "descriptor": {
+            "type": "string",
+            "format": "uri",
+            "enum": [
+              "https://noqt.no-qt.chatgpt.site/api/yumi/network-set-evidence"
+            ]
+          }
+        }
+      },
+      "NetworkNormalized": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "before",
+          "after"
+        ],
+        "properties": {
+          "before": {
+            "$ref": "#/components/schemas/NetworkFamilySets"
+          },
+          "after": {
+            "$ref": "#/components/schemas/NetworkFamilySets"
+          }
+        }
+      },
+      "NetworkFamilySets": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ipv4",
+          "ipv6"
+        ],
+        "properties": {
+          "ipv4": {
+            "type": "array",
+            "maxItems": 512,
+            "items": {
+              "$ref": "#/components/schemas/NetworkOutputCidr"
+            }
+          },
+          "ipv6": {
+            "type": "array",
+            "maxItems": 512,
+            "items": {
+              "$ref": "#/components/schemas/NetworkOutputCidr"
+            }
+          }
+        }
+      },
+      "NetworkOutputCidr": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60,
+        "description": "Canonical output CIDR. IPv4 is dotted decimal; IPv6 is lowercase hexadecimal with the longest zero run compressed, using the first-run tie break. The runtime's global output cap applies across lists, not independently to each list."
+      },
+      "NetworkChangeSet": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ipv4",
+          "ipv6"
+        ],
+        "properties": {
+          "ipv4": {
+            "$ref": "#/components/schemas/NetworkDelta"
+          },
+          "ipv6": {
+            "$ref": "#/components/schemas/NetworkDelta"
+          }
+        }
+      },
+      "NetworkDelta": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "cidrs",
+          "address_count"
+        ],
+        "properties": {
+          "cidrs": {
+            "type": "array",
+            "maxItems": 512,
+            "items": {
+              "$ref": "#/components/schemas/NetworkOutputCidr"
+            }
+          },
+          "address_count": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "maxLength": 39,
+            "description": "Exact decimal-string count of all addresses in this delta, including network and broadcast addresses."
+          },
+          "smallest_witness": {
+            "$ref": "#/components/schemas/NetworkWitness"
+          }
+        }
+      },
+      "NetworkWitness": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "address",
+          "before_contains",
+          "after_contains"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "The smallest address in the non-empty family-specific delta, formatted canonically."
+          },
+          "before_contains": {
+            "type": "boolean"
+          },
+          "after_contains": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NetworkAssumptions": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": {
+          "type": "string",
+          "enum": [
+            "Each CIDR denotes an inclusive mathematical IPv4 or IPv6 address set.",
+            "Set comparison is performed separately for IPv4 and IPv6; duplicates, overlaps, and input order do not change a set.",
+            "Address counts include every address in the set, including network and broadcast addresses."
+          ]
+        },
+        "description": "The runtime returns these three fixed assumptions in this order."
+      },
+      "NetworkLimitations": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "type": "string",
+          "enum": [
+            "This evidence does not assess firewall reachability, routing, security policy, or host usability.",
+            "This is an experimental prototype and makes no superiority, uniqueness, adoption, or security claim."
+          ]
+        },
+        "description": "The runtime returns these two fixed limitations in this order."
+      },
+      "ProbeErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "INVALID_QUERY",
+              "INVALID_JSON",
+              "INVALID_MODEL",
+              "INVALID_CONTENT_LENGTH",
+              "PAYLOAD_TOO_LARGE",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "METHOD_NOT_ALLOWED",
+              "INTERNAL_ERROR"
+            ]
+          }
+        }
+      },
+      "ProbePlannerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hypotheses",
+          "probes"
+        ],
+        "properties": {
+          "hypotheses": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/ProbeHypothesis"
+            }
+          },
+          "probes": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/ProbeDefinition"
+            }
+          }
+        },
+        "description": "The runtime accepts exactly these two top-level keys. It rejects unknown fields, duplicate hypothesis IDs, duplicate probe IDs, missing or unknown outcome keys, and any non-plain object record.",
+        "x-runtime-serialized-input-utf8-bytes": 65536,
+        "x-runtime-text-limit": {
+          "unit": "UTF-16 code units",
+          "max": 64
+        }
+      },
+      "ProbeText": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Runtime string bound is 1 through 64 UTF-16 code units. OpenAPI 3.0.3 maxLength is intentionally omitted because it is not a portable expression of that JavaScript UTF-16-unit rule.",
+        "x-runtime-max-utf16-code-units": 64
+      },
+      "ProbeHypothesis": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "weight"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ProbeText"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/ProbePositiveInteger"
+          }
+        }
+      },
+      "ProbeDefinition": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "cost",
+          "outcomes"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ProbeText"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/ProbePositiveInteger"
+          },
+          "outcomes": {
+            "$ref": "#/components/schemas/ProbeOutcomeMap"
+          }
+        }
+      },
+      "ProbePositiveInteger": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000000,
+        "description": "Runtime requires a safe integer from 1 through 1,000,000."
+      },
+      "ProbeOutcomeMap": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/ProbeText"
+        },
+        "description": "The runtime requires an ordinary object whose property set is exactly the unique hypothesis IDs from the same request: every hypothesis ID must occur once and no unknown ID may occur. OpenAPI 3.0.3 cannot express that cross-field exact-property-set constraint; additionalProperties here describes the value type, while the runtime rule is authoritative.",
+        "x-runtime-exact-property-set": "hypotheses[].id"
+      },
+      "ProbePlannerResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "schema",
+          "assumptions",
+          "totalWeight",
+          "expectedCost",
+          "expectedCostNumerator",
+          "expectedCostDenominator",
+          "undistinguishableGroups",
+          "policy"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "yumi.diagnostic-plan.v1"
+            ]
+          },
+          "assumptions": {
+            "$ref": "#/components/schemas/ProbeAssumptions"
+          },
+          "totalWeight": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12000000
+          },
+          "expectedCost": {
+            "type": "number",
+            "minimum": 0,
+            "description": "IEEE-754 decimal approximation of expectedCostNumerator / expectedCostDenominator."
+          },
+          "expectedCostNumerator": {
+            "$ref": "#/components/schemas/ProbeSafeNonnegativeInteger"
+          },
+          "expectedCostDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "undistinguishableGroups": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/ProbeUndistinguishableGroup"
+            }
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ProbePolicyNode"
+          }
+        },
+        "description": "Exact integer numerator and denominator fields use safe integer arithmetic. Decimal expectedCost and nested probability fields are IEEE-754 approximations of exact integer ratios. Policy recursion is bounded by the finite supplied model; the runtime materializes at most 12 hypothesis levels.",
+        "x-runtime-output-policy-max-depth": 12
+      },
+      "ProbeAssumptions": {
+        "type": "array",
+        "minItems": 10,
+        "maxItems": 10,
+        "items": {
+          "type": "string",
+          "enum": [
+            "Outcomes are deterministic and caller-supplied.",
+            "Hypothesis weights are treated as relative prior masses and normalized only for probabilities.",
+            "Expected cost is conditional on the supplied model.",
+            "Undistinguishable means identical complete outcome vectors across the supplied probes only.",
+            "Policy branch probabilities are conditional on the parent policy node.",
+            "Global undistinguishableGroups reports only non-singleton equivalence classes.",
+            "Weights and costs are positive integers from 1 through 1,000,000.",
+            "Hypothesis IDs, probe IDs, and outcome strings contain 1 through 64 UTF-16 code units.",
+            "Expected-cost numerators and denominators use exact safe integer arithmetic.",
+            "Decimal expectedCost and probability fields are IEEE-754 approximations of adjacent exact integer ratios."
+          ]
+        },
+        "description": "The runtime returns these ten fixed assumptions in this order."
+      },
+      "ProbeSafeNonnegativeInteger": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991,
+        "description": "A nonnegative JavaScript safe integer."
+      },
+      "ProbeSafePositiveInteger": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 9007199254740991,
+        "description": "A positive JavaScript safe integer."
+      },
+      "ProbeProbability": {
+        "type": "number",
+        "minimum": 0,
+        "exclusiveMinimum": true,
+        "maximum": 1,
+        "description": "Runtime probability is strictly greater than zero and at most one; exact numerator and denominator fields accompany it."
+      },
+      "ProbeHypothesisIds": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 12,
+        "items": {
+          "$ref": "#/components/schemas/ProbeText"
+        },
+        "description": "IDs preserve the supplied hypothesis order and are unique because the request rejects duplicates."
+      },
+      "ProbeUndistinguishableGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "hypothesisIds",
+          "totalWeight",
+          "probability",
+          "probabilityNumerator",
+          "probabilityDenominator"
+        ],
+        "properties": {
+          "hypothesisIds": {
+            "$ref": "#/components/schemas/ProbeHypothesisIds"
+          },
+          "totalWeight": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "probability": {
+            "$ref": "#/components/schemas/ProbeProbability"
+          },
+          "probabilityNumerator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "probabilityDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          }
+        }
+      },
+      "ProbePolicyNode": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ProbeResolvedNode"
+          },
+          {
+            "$ref": "#/components/schemas/ProbeUndistinguishableNode"
+          },
+          {
+            "$ref": "#/components/schemas/ProbeProbeNode"
+          }
+        ]
+      },
+      "ProbeResolvedNode": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "hypothesisId",
+          "hypothesisIds",
+          "totalWeight",
+          "expectedCost",
+          "expectedCostNumerator",
+          "expectedCostDenominator"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "resolved"
+            ]
+          },
+          "hypothesisId": {
+            "$ref": "#/components/schemas/ProbeText"
+          },
+          "hypothesisIds": {
+            "$ref": "#/components/schemas/ProbeHypothesisIds"
+          },
+          "totalWeight": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "expectedCost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "expectedCostNumerator": {
+            "$ref": "#/components/schemas/ProbeSafeNonnegativeInteger"
+          },
+          "expectedCostDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          }
+        }
+      },
+      "ProbeUndistinguishableNode": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "hypothesisIds",
+          "totalWeight",
+          "expectedCost",
+          "expectedCostNumerator",
+          "expectedCostDenominator"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "undistinguishable"
+            ]
+          },
+          "hypothesisIds": {
+            "$ref": "#/components/schemas/ProbeHypothesisIds"
+          },
+          "totalWeight": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "expectedCost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "expectedCostNumerator": {
+            "$ref": "#/components/schemas/ProbeSafeNonnegativeInteger"
+          },
+          "expectedCostDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          }
+        }
+      },
+      "ProbeProbeNode": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "probeId",
+          "cost",
+          "expectedCost",
+          "expectedCostNumerator",
+          "expectedCostDenominator",
+          "hypothesisIds",
+          "totalWeight",
+          "outcomes"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "probe"
+            ]
+          },
+          "probeId": {
+            "$ref": "#/components/schemas/ProbeText"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/ProbePositiveInteger"
+          },
+          "expectedCost": {
+            "type": "number",
+            "minimum": 0
+          },
+          "expectedCostNumerator": {
+            "$ref": "#/components/schemas/ProbeSafeNonnegativeInteger"
+          },
+          "expectedCostDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "hypothesisIds": {
+            "$ref": "#/components/schemas/ProbeHypothesisIds"
+          },
+          "totalWeight": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "outcomes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/ProbePolicyOutcome"
+            }
+          }
+        }
+      },
+      "ProbePolicyOutcome": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "outcome",
+          "probability",
+          "probabilityNumerator",
+          "probabilityDenominator",
+          "next"
+        ],
+        "properties": {
+          "outcome": {
+            "$ref": "#/components/schemas/ProbeText"
+          },
+          "probability": {
+            "$ref": "#/components/schemas/ProbeProbability"
+          },
+          "probabilityNumerator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "probabilityDenominator": {
+            "$ref": "#/components/schemas/ProbeSafePositiveInteger"
+          },
+          "next": {
+            "$ref": "#/components/schemas/ProbePolicyNode"
+          }
+        }
+      }
+    }
+  }
+}

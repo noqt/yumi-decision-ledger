@@ -436,4 +436,7 @@ The fixed public URLs are unchanged. The MCP handler accepts only the fixed `htt
 
 The [OpenAPI 3.0.3 definition](https://raw.githubusercontent.com/noqt/yumi-decision-ledger/main/openapi/yumi-wheel-evidence.json) describes the existing anonymous GET, POST and OPTIONS surface for public PyPI release wheel metadata. It covers the bounded request format, per-release provider results and HTTP errors; it does not describe Yumi's private assistant or a model service.
 
+
+A combined [OpenAPI 3.0.3 definition](openapi/yumi-public-utilities.json) describes only the three existing POST computations for wheel evidence, network-set evidence, and probe planning at the same public site. Descriptor GET, URL-encoded computation GET, and OPTIONS interfaces remain available on their existing routes but are outside this combined client view.
+
 CC0-1.0 applies only to that original OpenAPI definition. The repository's existing MIT-licensed source and runtime are unchanged.

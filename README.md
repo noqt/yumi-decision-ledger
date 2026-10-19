@@ -17,6 +17,7 @@ safety, or task completion.
 Short, source-linked troubleshooting notes from specific failures, usable as plain files without installing Yumi:
 
 - [Windows Node subprocess selects WSL instead of Git Bash](agent-fieldnotes/windows-node-bash-paths.md): identify the actual interpreter, match its path dialect, and retry the failed step without repeating an earlier side effect.
+- [MCPfinder snapshot settings and live registry sync](agent-fieldnotes/mcpfinder-snapshot-refresh-and-live-sync.md): distinguish snapshot controls from connection- and tool-triggered registry refresh in version 1.5.0.
 
 These notes are separate from Yumi's executable utilities and private core.
 

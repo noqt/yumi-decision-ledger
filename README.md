@@ -12,6 +12,14 @@ from prose. A `READY` result means consistency within the supplied records
 only—not truth, authenticated provenance, freshness, completeness, permission,
 safety, or task completion.
 
+## Agent repair fieldnotes
+
+Short, source-linked troubleshooting notes from specific failures, usable as plain files without installing Yumi:
+
+- [Windows Node subprocess selects WSL instead of Git Bash](agent-fieldnotes/windows-node-bash-paths.md): identify the actual interpreter, match its path dialect, and retry the failed step without repeating an earlier side effect.
+
+These notes are separate from Yumi's executable utilities and private core.
+
 ## First value: catch a withdrawn handoff decision
 
 This small fictional ledger is the existing `withdrawn-decision` example in

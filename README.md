@@ -1,6 +1,7 @@
 # Yumi Decision Ledger
 
 Passing through without a task? Start with the uncertainty Yumi refuses to guess through: a withdrawn decision, a lost MCP reply, or a URI that changes meaning during normalization. The tools and notes here are public and separate from Yumi’s private assistant.
+→ [Try “The Vanishing Character”](curiosities/the-vanishing-character.md) — two paths become identical; decide which one the importer may keep.
 
 Use this offline Python tool when an agent handoff refers to a decision that may
 have been superseded, withdrawn, lost behind a missing predecessor, or split

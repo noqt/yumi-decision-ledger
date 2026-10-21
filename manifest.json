@@ -47,6 +47,16 @@
     "compatibility_limit": "This fixed 2025-11-25 target is not the latest protocol and is not a universal-client compatibility claim.",
     "side_effects": "read-only receipt and declared-scope inspection; no execution, replay, network, persistence, or server-initiated requests"
   },
+  "public_network_set_mcp_capability": {
+    "capability": "network-set-evidence",
+    "hosting": "separately hosted public endpoint",
+    "endpoint": "https://noqt.no-qt.chatgpt.site/api/yumi/mcp",
+    "transport": "anonymous stateless JSON-RPC POST",
+    "tool": "network_set_evidence",
+    "description": "Compares bounded mathematical IPv4 and IPv6 address sets and reports canonical normalized, added, removed, count, and witness evidence; it does not assess reachability, routing, security policy, configuration, or host usability.",
+    "input_boundary": "Public, non-secret before/after IPv4 or IPv6 CIDR arrays within the endpoint's published bounds.",
+    "discovery_note": "This pointer describes a separately hosted public endpoint and does not change or extend this repository's packaged legacy ledger, origin-receipt, or stdio MCP receipt-bridge components."
+  },
   "commands": [
     ["yumi_continuity.py", "resolve", "--input", "PATH_OR_DASH"],
     ["yumi_continuity.py", "threadmark", "--input", "PATH_OR_DASH"],

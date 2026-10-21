@@ -1,0 +1,118 @@
+name: Publish CIDR MCP metadata
+
+permissions: {}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - server.json
+      - .github/workflows/publish-mcp.yml
+
+concurrency:
+  group: publish-cidr-mcp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      ${{ github.event_name == 'push' &&
+          github.repository == 'noqt/yumi-decision-ledger' &&
+          github.ref == 'refs/heads/main' &&
+          github.run_attempt == 1 &&
+          github.event.head_commit.message == 'Publish CIDR MCP metadata (GC-YUMI-MCP-REGISTRY-20261021-134; AI agent acting for noqt)' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Verify immutable publish input
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_message='Publish CIDR MCP metadata (GC-YUMI-MCP-REGISTRY-20261021-134; AI agent acting for noqt)'
+          expected_parent='c10bb25f414427a0434663a30d83bd7b22c9bcfb'
+          expected_server_sha='73f4d2d04e0e40be1021578b886d6d48901c9a24922a921044f6e67831bfef07'
+
+          head_sha="$(git rev-parse --verify HEAD)"
+          read -r -a revs <<< "$(git rev-list --parents -n 1 HEAD)"
+          if (( ${#revs[@]} != 2 )); then
+            printf '%s\n' 'HEAD must have exactly one parent.' >&2
+            exit 1
+          fi
+          if [[ "${revs[0]}" != "$head_sha" || "${revs[1]}" != "$expected_parent" ]]; then
+            printf '%s\n' 'HEAD or its parent is not approved.' >&2
+            exit 1
+          fi
+
+          commit_message="$(git log -1 --pretty=%B)"
+          if [[ "$commit_message" != "$expected_message" ]]; then
+            printf '%s\n' 'The commit message is not approved.' >&2
+            exit 1
+          fi
+
+          expected_paths=(
+            '.github/workflows/publish-mcp.yml'
+            'server.json'
+          )
+          mapfile -t changed_paths < <(git diff --name-only "$expected_parent" "$head_sha" | sort)
+          if (( ${#changed_paths[@]} != 2 )); then
+            printf '%s\n' 'The commit changed an unexpected number of paths.' >&2
+            exit 1
+          fi
+          if [[ "${changed_paths[0]}" != "${expected_paths[0]}" || "${changed_paths[1]}" != "${expected_paths[1]}" ]]; then
+            printf '%s\n' 'The changed paths are not approved.' >&2
+            exit 1
+          fi
+
+          printf '%s  %s\n' "$expected_server_sha" 'server.json' | sha256sum --check --status
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          expected = {
+              "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+              "name": "io.github.noqt/cidr-set-difference",
+              "title": "CIDR Set Difference",
+              "description": "IPv4/IPv6 CIDR set differences, normalized coverage, exact counts and witnesses. Math only.",
+              "version": "1.0.0",
+              "websiteUrl": "https://noqt.no-qt.chatgpt.site/yumi/network-sets",
+              "remotes": [
+                  {
+                      "type": "streamable-http",
+                      "url": "https://noqt.no-qt.chatgpt.site/api/yumi/mcp",
+                  }
+              ],
+          }
+          actual = json.loads(Path("server.json").read_text(encoding="utf-8"))
+          if actual != expected:
+              raise SystemExit("server.json metadata object or shape is not approved")
+          PY
+
+      - name: Download and verify MCP publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive='mcp-publisher_linux_amd64.tar.gz'
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            'https://github.com/modelcontextprotocol/registry/releases/download/v1.8.1/mcp-publisher_linux_amd64.tar.gz'
+          printf '%s  %s\n' 'a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc' "$archive" | sha256sum --check --status
+          tar --extract --gzip --file="$archive" --no-same-owner -- mcp-publisher
+          chmod 0755 ./mcp-publisher
+
+      - name: Authenticate with GitHub OIDC
+        shell: bash
+        run: ./mcp-publisher login github-oidc --registry=https://registry.modelcontextprotocol.io
+
+      - name: Publish server metadata
+        shell: bash
+        run: ./mcp-publisher publish ./server.json

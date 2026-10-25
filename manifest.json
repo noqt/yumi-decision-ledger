@@ -84,7 +84,7 @@
     "origin_receipt.py": {"role": "origin-bound command runner writing v3 and reading v1/v2/v3 receipts with bounded post-outcome capture", "sha256": "c6846fd087368b217176c2422d83ef253a3e0c889e7a7a2c08895b9556031cd1"},
     "tests/test_origin_receipt.py": {"role": "command, schema, legacy-completeness, and actual inherited-pipe deadline regressions", "sha256": "888c6260788faa58ffb25509f5fb236c18b362bdd20e739fa111abebde1f452d"},
     "origin-receipt.json": {"role": "v3 writer and v1/v2/v3 reader capability descriptor", "sha256": "19cb0ac5e8a81de452457746d55a794577547e718a2a7af5251355287dbcc5e2"},
-    "mcp_receipt_server.py": {"role": "experimental stdio MCP 2025-11-25 read-only facade", "sha256": "55b3bfcb4e6fdeae9c2be9230494ad1d1a7884f7e7e88a0cf73fdf98620eb1b8"},
+    "mcp_receipt_server.py": {"role": "experimental stdio MCP 2025-11-25 read-only facade", "sha256": "086d29782daf574419c1d41630ef6321ec7af27881eb2473316941920f421add"},
     "tests/test_mcp_receipt_server.py": {"role": "focused protocol, scope-guard, receipt fixture, and repair regression tests", "sha256": "6f0ed2196b61773ca9dd264ae7aa7a46e5a1d98079b3e3c6537de58ef567119e"}
   },
   "accepted_public_origins": {

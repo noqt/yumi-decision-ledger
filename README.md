@@ -267,6 +267,17 @@ LF-normalized content matched the published files, but their installed byte
 hashes did not. SHA-256 values in [`manifest.json`](manifest.json) identify the
 original published LF bytes, not byte-identical Windows copies.
 
+### Fresh Git-clone byte fidelity
+
+When checking out a source revision that contains [`.gitattributes`](.gitattributes)
+with a fresh Git clone, these explicit `-text` entries are intended to preserve
+the committed bytes for the listed files. This is distinct from the historical
+`skills` installer compatibility observation above. Before bridge startup,
+verify the exact checked-out `origin_receipt.py` bytes and SHA-256 against the
+expected manifest value. This guidance makes no claim about a released or
+signed revision and does not promise byte fidelity through editors, installers,
+overrides, custom filters, or other non-Git transformations.
+
 ## Check a handoff card
 
 `threadmark_verify.py` reads one bounded card and one bounded ledger, then

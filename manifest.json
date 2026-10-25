@@ -67,7 +67,8 @@
     ["origin_receipt.py", "check", "--workspace", "PATH", "--receipt", "REL_PATH", "[--input REL_PATH]", "[--artifact REL_PATH]"]
   ],
   "files": {
-    "README.md": {"role": "documentation", "sha256": "17eb8973425508bf5174effd4316f13ed8764651d2bcffbf2a6e8670ff86c90f"},
+    ".gitattributes": {"role": "explicit byte-faithful Git checkout attributes", "sha256": "9568e512811c254f92e81c49ad3f52141de1156b307960a86bb39d08057b4f48"},
+    "README.md": {"role": "documentation", "sha256": "1a24a7d45fcb8828eb69b4cacc85ac4b5abead9f46cde3570686bbcb098e3843"},
     "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "e1eb4786e4afd45df74f2286e29eb719c510cbc46f4bd702b55a35de67d1eec4"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},

@@ -69,7 +69,7 @@
   ],
   "files": {
     ".gitattributes": {"role": "explicit byte-faithful Git checkout attributes", "sha256": "abacdbfe34c748098fb29096241582f64d6e83de98e7b68ccf4808e9a818f46f"},
-    "README.md": {"role": "documentation", "sha256": "4f91f0e3a0fa3ab9150d9268a9d476367e36d07b6772b114742f1342dd20eb0a"},
+    "README.md": {"role": "documentation", "sha256": "af4898a63c41b0e7dbf6f2faad4dba45d40085a09d88a82eb36bffc9145e78a7"},
     "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "e1eb4786e4afd45df74f2286e29eb719c510cbc46f4bd702b55a35de67d1eec4"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},

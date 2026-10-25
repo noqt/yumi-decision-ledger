@@ -42,6 +42,38 @@ source contents. It does not claim a hardened sandbox or an atomic snapshot,
 authenticity, a signature, or safety, and it does not replace loader, version,
 callable, consent, scope, or execution authority guards.
 
+### From package preflight to a ready local stdio bridge
+
+After the preflight reports `PASS`, use Python 3.12 or newer. On Windows,
+`python` may replace `python3.12` only when it resolves to the required
+Python version. Explicitly select an existing workspace that the caller is
+authorized to read; `PATH` below must name that workspace.
+
+From this package directory, start the bridge in isolated mode:
+
+```text
+python3.12 -I -B -S mcp_receipt_server.py --workspace PATH
+```
+
+Send these three inert newline-delimited JSON-RPC frames to its standard input,
+in this order. The initialize request selects protocol `2025-11-25`:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"yumi-readiness-probe","version":"1.0"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+```
+
+Readiness is bounded and affirmative only when the bridge returns a valid
+initialize result and a valid `tools/list` response exposing
+`yumi_check_receipt`. A process that merely starts and waits on stdin is not
+ready. After the probe, close stdin and wait for, or reap, the process.
+
+The caller's permission to read the selected workspace and any later input is
+separate from the bridge's check-only capability. Check-only does not provide
+permission, sandboxing, authentication, or safety. A successful exchange is
+protocol readiness for this bounded probe, not full MCP compatibility.
+
 ## Agent repair fieldnotes
 
 Short, source-linked troubleshooting notes from specific failures, usable as plain files without installing Yumi:

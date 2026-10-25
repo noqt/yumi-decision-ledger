@@ -18,3 +18,5 @@
 /origin-receipt.json -text
 /mcp_receipt_server.py -text
 /tests/test_mcp_receipt_server.py -text
+/verify_package.py -text
+/tests/test_verify_package.py -text

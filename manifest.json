@@ -64,11 +64,12 @@
     ["threadmark_verify.py", "check", "--card", "PATH", "--ledger", "PATH"],
     ["snapshot_check.py", "check", "--snapshot", "PATH_OR_DASH", "--ledger", "PATH_OR_DASH"],
     ["origin_receipt.py", "run", "--workspace", "PATH", "--receipt", "REL_PATH", "[--input REL_PATH]", "[--artifact REL_PATH]", "--", "ARGV..."],
-    ["origin_receipt.py", "check", "--workspace", "PATH", "--receipt", "REL_PATH", "[--input REL_PATH]", "[--artifact REL_PATH]"]
+    ["origin_receipt.py", "check", "--workspace", "PATH", "--receipt", "REL_PATH", "[--input REL_PATH]", "[--artifact REL_PATH]"],
+    ["verify_package.py", "PACKAGE_DIRECTORY"]
   ],
   "files": {
-    ".gitattributes": {"role": "explicit byte-faithful Git checkout attributes", "sha256": "9568e512811c254f92e81c49ad3f52141de1156b307960a86bb39d08057b4f48"},
-    "README.md": {"role": "documentation", "sha256": "1a24a7d45fcb8828eb69b4cacc85ac4b5abead9f46cde3570686bbcb098e3843"},
+    ".gitattributes": {"role": "explicit byte-faithful Git checkout attributes", "sha256": "abacdbfe34c748098fb29096241582f64d6e83de98e7b68ccf4808e9a818f46f"},
+    "README.md": {"role": "documentation", "sha256": "4f91f0e3a0fa3ab9150d9268a9d476367e36d07b6772b114742f1342dd20eb0a"},
     "SKILL.md": {"role": "native agent skill entrypoint", "sha256": "e1eb4786e4afd45df74f2286e29eb719c510cbc46f4bd702b55a35de67d1eec4"},
     "yumi_continuity.py": {"sha256": "1e396a27b23e68dd57a5ef84caff8da7603eedaa74f6564223be77c1f8e43093"},
     "threadmark_handoff.py": {"sha256": "97eea4e0dd0f7cd8d767a6bbe03a47a3f1d5711a80583039e2f856c3a5b7d1ac"},
@@ -86,7 +87,9 @@
     "tests/test_origin_receipt.py": {"role": "command, schema, legacy-completeness, and actual inherited-pipe deadline regressions", "sha256": "888c6260788faa58ffb25509f5fb236c18b362bdd20e739fa111abebde1f452d"},
     "origin-receipt.json": {"role": "v3 writer and v1/v2/v3 reader capability descriptor", "sha256": "19cb0ac5e8a81de452457746d55a794577547e718a2a7af5251355287dbcc5e2"},
     "mcp_receipt_server.py": {"role": "experimental stdio MCP 2025-11-25 read-only facade", "sha256": "086d29782daf574419c1d41630ef6321ec7af27881eb2473316941920f421add"},
-    "tests/test_mcp_receipt_server.py": {"role": "focused protocol, scope-guard, receipt fixture, and repair regression tests", "sha256": "6f0ed2196b61773ca9dd264ae7aa7a46e5a1d98079b3e3c6537de58ef567119e"}
+    "tests/test_mcp_receipt_server.py": {"role": "focused protocol, scope-guard, receipt fixture, and repair regression tests", "sha256": "6f0ed2196b61773ca9dd264ae7aa7a46e5a1d98079b3e3c6537de58ef567119e"},
+    "verify_package.py": {"role": "bounded read-only static package consistency preflight", "sha256": "5e4653264b567fa4fb4a4cd9892c9dc3c7771c248a1f899c82772c4eba593c86"},
+    "tests/test_verify_package.py": {"role": "focused static package preflight fixture regressions", "sha256": "3b5189f4daf03658b56e37fd78abb304c5986aa0a300d677bc980ed3e74816af"}
   },
   "accepted_public_origins": {
     "repository": "https://github.com/noqt/noqt",

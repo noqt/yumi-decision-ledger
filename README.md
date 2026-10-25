@@ -16,6 +16,32 @@ from prose. A `READY` result means consistency within the supplied records
 only—not truth, authenticated provenance, freshness, completeness, permission,
 safety, or task completion.
 
+## Before bridge startup: local package consistency
+
+From this package directory, select the directory explicitly and run the
+read-only consistency check before starting the bridge:
+
+```text
+python -I -B -S verify_package.py .
+```
+
+The command emits bounded JSON. Exit `0` means `PASS`; exit `1` means a
+consistency failure such as a manifest digest, attributes inventory, or origin
+pin mismatch; exit `2` means invocation, structural, or runtime refusal. The
+checker reads only the selected adjacent package directory: strict UTF-8
+`manifest.json` (at most 128 KiB), `.gitattributes` (at most 16 KiB), and its
+declared inventory (at most 64 files, 1 MiB per file, and 8 MiB in aggregate).
+The JSON result is capped at 16 KiB.
+It requires the package and bridge core-pin files, accepts only literal
+root-anchored `-text` rules, hashes raw bytes, and statically parses the bridge
+origin pin without importing or executing any component.
+
+This is a bounded local consistency diagnostic only. It performs no network,
+subprocess, discovery, repair, or data-workload access and never reports raw
+source contents. It does not claim a hardened sandbox or an atomic snapshot,
+authenticity, a signature, or safety, and it does not replace loader, version,
+callable, consent, scope, or execution authority guards.
+
 ## Agent repair fieldnotes
 
 Short, source-linked troubleshooting notes from specific failures, usable as plain files without installing Yumi:

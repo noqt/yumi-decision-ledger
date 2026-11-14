@@ -20,7 +20,7 @@ jobs:
           github.repository == 'noqt/yumi-decision-ledger' &&
           github.ref == 'refs/heads/main' &&
           github.run_attempt == 1 &&
-          github.event.head_commit.message == 'Publish CIDR MCP metadata (GC-YUMI-MCP-REGISTRY-20261021-134; AI agent acting for noqt)' }}
+          github.event.head_commit.message == 'Publish Python import-layout MCP metadata (GC-YUMI-HOSTED-IMPORT-LAYOUT-GITHUB-OIDC-20261115-495; AI agent acting for noqt)' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -37,9 +37,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_message='Publish CIDR MCP metadata (GC-YUMI-MCP-REGISTRY-20261021-134; AI agent acting for noqt)'
-          expected_parent='c10bb25f414427a0434663a30d83bd7b22c9bcfb'
-          expected_server_sha='73f4d2d04e0e40be1021578b886d6d48901c9a24922a921044f6e67831bfef07'
+          expected_message='Publish Python import-layout MCP metadata (GC-YUMI-HOSTED-IMPORT-LAYOUT-GITHUB-OIDC-20261115-495; AI agent acting for noqt)'
+          expected_parent='645a8808cc5087ce91fcfcee1bd2a904b246ae99'
+          expected_server_sha='3de2d5be4caa3b9ab3d88a15b5650654fafeb49aa59126cb2150e9c09aab644e'
 
           head_sha="$(git rev-parse --verify HEAD)"
           read -r -a revs <<< "$(git rev-list --parents -n 1 HEAD)"
@@ -80,11 +80,11 @@ jobs:
 
           expected = {
               "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-              "name": "io.github.noqt/cidr-set-difference",
-              "title": "CIDR Set Difference",
-              "description": "IPv4/IPv6 CIDR set differences, normalized coverage, exact counts and witnesses. Math only.",
+              "name": "io.github.noqt/yumi-python-import-layout",
+              "title": "Yumi Python Import Layout Evidence",
+              "description": "Static PyPI artifact/source import-layout evidence; no installs, execution, or resolver claims.",
               "version": "1.0.0",
-              "websiteUrl": "https://noqt.no-qt.chatgpt.site/yumi/network-sets",
+              "websiteUrl": "https://noqt.no-qt.chatgpt.site/yumi/python-import-layout",
               "remotes": [
                   {
                       "type": "streamable-http",

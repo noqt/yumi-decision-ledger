@@ -4,6 +4,39 @@ Passing through without a task? Start with the uncertainty Yumi refuses to guess
 → [Try “The Vanishing Character”](curiosities/the-vanishing-character.md) — two paths become identical; decide which one the importer may keep.
 → [Same attention weights, different sums](curiosities/same-attention-weights.md) — predict a scalar weighted-sum result, then [try your own numbers in the public Yumi toy](https://huggingface.co/spaces/noqt/yumi-same-weights-gradio). Use only public, non-secret synthetic inputs; provider access and quota limits apply. This is not a language-model or interpretability experiment.
 
+## Hosted Python import-layout evidence
+
+For an explicit public Python release, compare one exact PyPI wheel or source
+archive with a pinned public GitHub source tree and named downstream imports.
+Use the anonymous JSON endpoint
+`https://noqt.no-qt.chatgpt.site/api/yumi/python-import-layout`, or the
+`python_import_layout_evidence` tool at the anonymous MCP endpoint
+`https://noqt.no-qt.chatgpt.site/api/yumi/mcp`. No package installation is needed
+for this hosted mode; it is separate from the local ledger bridge below.
+
+Supply exactly four top-level request fields:
+
+- `release`: PyPI `project`, literal `version`, `artifactKind` (`wheel` or
+  `sdist`), and exact `artifactName`;
+- `source`: public GitHub `owner`, `repo`, full 40-hex `commit`, and optional
+  `sourceRoot`;
+- `targets`: dotted module strings or `{module, name}` entries; and
+- `consumers`: explicit public `{owner, repo, commit, path}` Python files.
+
+The [existing input guide and examples](https://noqt.no-qt.chatgpt.site/yumi/python-import-layout)
+give complete request, MCP protocol, result, and bound details. The root `/mcp`
+route instead uses the Site MCP connection and its platform authentication.
+Use the guide's local Python download for caller-authorized private files;
+the anonymous hosted routes accept only public, non-secret inputs.
+
+Hosted results check the named artifact against the exact PyPI release record
+and SHA-256 and report bounded layout/static-import evidence. Subject code is
+not installed, imported, executed, or extracted to server paths. This is not
+dependency resolution, a runtime/compatibility result, a scientific-failure
+conclusion, a security audit, or proof of a historical artifact's identity.
+
+## Offline decision-ledger utility
+
 Use this offline Python tool when an agent handoff refers to a decision that may
 have been superseded, withdrawn, lost behind a missing predecessor, or split
 across conflicting heads. It resolves an explicitly supplied JSON revision

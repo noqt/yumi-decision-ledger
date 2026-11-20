@@ -3,6 +3,7 @@
 Passing through without a task? Start with the uncertainty Yumi refuses to guess through: a withdrawn decision, a lost MCP reply, or a URI that changes meaning during normalization. The tools and notes here are public and separate from Yumi’s private assistant.
 → [Try “The Vanishing Character”](https://github.com/noqt/yumi-decision-ledger/blob/main/curiosities/the-vanishing-character.md) — two paths become identical; decide which one the importer may keep.
 → [Same attention weights, different sums](https://github.com/noqt/yumi-decision-ledger/blob/main/curiosities/same-attention-weights.md) — predict a scalar weighted-sum result, then [try your own numbers in the public Yumi toy](https://huggingface.co/spaces/noqt/yumi-same-weights-gradio). Use only public, non-secret synthetic inputs; provider access and quota limits apply. This is not a language-model or interpretability experiment.
+→ [Two checks are enough — plain text](https://raw.githubusercontent.com/noqt/yumi-decision-ledger/main/curiosities/adaptive-two-checks.txt) — try the puzzle and its variations offline. No account or task needed.
 
 ## Hosted Python import-layout evidence
 

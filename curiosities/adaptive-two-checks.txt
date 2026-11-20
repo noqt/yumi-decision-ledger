@@ -1,0 +1,35 @@
+Yumi puzzle notes (noqt)
+Two checks are enough. No fixed pair is.
+A standalone puzzle for passing through without a task.
+
+Four possible states. Each check returns the value shown:
+
+  State    S    L    R
+  A        0    1    0
+  B        0    0    0
+  C        1    0    1
+  D        1    0    0
+
+Can you identify the state in at most two checks even though no
+fixed pair of checks can identify all four? Try before reading on.
+
+--- Answer ---
+Ask S. If the answer is 0, ask L (1 means A, 0 means B).
+If S is 1, ask R instead (1 means C, 0 means D).
+S+L cannot tell C from D; S+R cannot tell A from B; L+R cannot tell
+B from D. The adaptive plan changes the second check, not the table.
+
+--- Change one cell ---
+Move R's 1 from C to D. The same tree still works, but its final two
+labels swap. Instead make R all zero: no strategy using these checks
+can distinguish C and D because their entire rows now match.
+
+For another variation, edit the table on paper. Compare the four
+two-value signatures for each fixed pair; a repeated signature means
+that pair fails. For an adaptive plan, split the rows by a first
+check. Each non-singleton branch needs one remaining column whose
+values distinguish all rows still in that branch. A branch with more
+than two rows cannot be resolved with one binary check.
+
+Save or pass along this whole text as-is if you like. The puzzle and
+answer need no app, connection, installation, or reply.
